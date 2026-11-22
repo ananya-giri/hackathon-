@@ -2,8 +2,43 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * BYTEON 2026 — DESIGN SYSTEM v2
+ *
+ * Palette (three roles, nothing else — that restraint is what keeps it classy):
+ *   --ink     #050811  page / panel base
+ *   --emerald #00F5A0  STRUCTURAL only — live dot, system marks, chapter counter
+ *   --amber   #FFBA00  ACTION + EMPHASIS — CTAs, key numbers, kickers, active states
+ *   --bronze  #B46617  PREMIUM only — champion badge, rules, dividers.
+ *                       Never as small text: bronze on dark is ~3:1. It is a
+ *                       fill/shape colour; its readable partner is #E8A85C.
+ *   --paper   #F2EFE6  body copy (warm off-white — pairs with amber/bronze)
+ *   --sage    #A8BFAF  muted meta text
+ *
+ * Type hierarchy (this is what distinguishes the writing, not random colours):
+ *   headings  pure white, with a dark text-shadow so they lift off the video
+ *   emphasis  amber (#FFBA00)
+ *   body      warm paper (#F2EFE6)
+ *   meta      sage (#A8BFAF)
+ *   data      amber bold (amounts, phone numbers, times)
+ *
+ * Transparency + readability: panels are translucent (video shows through)
+ * but carry backdrop-blur, an inset top highlight, and a vertical gradient
+ * that is denser at the bottom. Headings/body also carry a dark text-shadow.
+ * The video itself is brighter now (0.78) because the panel does the work.
+ */
+
 :root {
-  --foreground-rgb: 240, 253, 244;
+  --ink: #050811;
+  --emerald: #00f5a0;
+  --amber: #ffba00;
+  --amber-bright: #ffc933;
+  --bronze: #b46617;
+  --bronze-light: #e8a85c;
+  --cream: #fff3d6;
+  --paper: #f2efe6;
+  --sage: #a8bfaf;
+  --foreground-rgb: 242, 239, 230;
   --background-start-rgb: 5, 8, 17;
   --background-end-rgb: 2, 4, 10;
 }
@@ -13,53 +48,381 @@ body {
   background: #050811;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   overflow-x: hidden;
-  selection-background-color: #00f5a0;
-  selection-color: #050811;
 }
 
-/* Custom Cyber Glows and Shadows */
+::selection {
+  background-color: #ffba00;
+  color: #1a1200;
+}
+
+/* ------------------------------------------------------------------ */
+/* VIDEO — brighter now (0.78); the panel, not a black veil, carries    */
+/* the contrast. Scrim is a light veil + soft vignette only.            */
+/* ------------------------------------------------------------------ */
+.video-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.78) saturate(1.05);
+}
+
+.video-scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 50%, rgba(3, 6, 12, 0.08) 0%, rgba(3, 6, 12, 0.48) 100%),
+    linear-gradient(rgba(3, 6, 12, 0.22), rgba(3, 6, 12, 0.22));
+}
+
+/* ------------------------------------------------------------------ */
+/* CHAPTER PANEL — translucent on purpose: the video stays visible.     */
+/* Readability comes from blur + a bottom-weighted gradient + shadow.   */
+/* ------------------------------------------------------------------ */
+.chapter-panel {
+  width: 100%;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 2rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: linear-gradient(180deg, rgba(3, 6, 12, 0.52) 0%, rgba(3, 6, 12, 0.66) 100%);
+  -webkit-backdrop-filter: blur(18px) saturate(1.25);
+  backdrop-filter: blur(18px) saturate(1.25);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 1.5rem;
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.09);
+}
+
+.chapter-panel--static {
+  max-width: none;
+}
+
+@media (min-width: 640px) {
+  .chapter-panel {
+    padding: 2.75rem 3rem;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Type scale.                                                          */
+/* ------------------------------------------------------------------ */
+.hero-title {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: clamp(3.5rem, 12vw, 7.5rem);
+  line-height: 0.95;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  color: #ffffff;
+  text-shadow:
+    0 2px 24px rgba(0, 0, 0, 0.7),
+    0 0 34px rgba(255, 186, 0, 0.28);
+}
+
+.chapter-title {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: clamp(1.7rem, 5vw, 3rem);
+  line-height: 1.1;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  margin-top: 0.75rem;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.65);
+}
+
+/* The one emphasis colour. (Was a green gradient — now solid amber.) */
+.accent-text {
+  color: #ffba00;
+}
+
+.body-text {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 1rem;
+  line-height: 1.65;
+  color: #f2efe6;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.55);
+}
+
+/* Kicker chip: amber label on a translucent dark chip. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 1rem;
+  border-radius: 9999px;
+  background: rgba(255, 186, 0, 0.1);
+  border: 1px solid rgba(255, 186, 0, 0.45);
+  color: #ffba00;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.date-pill {
+  font-size: 0.75rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 0.5rem;
+  background: #ffba00;
+  color: #1a1200;
+  font-weight: 800;
+  vertical-align: middle;
+}
+
+.fact-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.9rem;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #f2efe6;
+  font-size: 0.875rem;
+}
+
+.verify-note {
+  margin-top: 0.75rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8rem;
+  color: #ffba00;
+  max-width: 34rem;
+}
+
+/* Cards inside a chapter: translucent white wash + blur — video visible. */
+.mini-card {
+  padding: 1.25rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+}
+
+.mini-card--hot {
+  border-color: rgba(255, 186, 0, 0.55);
+}
+
+.mini-label {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #ffba00;
+}
+
+.mini-heading {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin-top: 0.35rem;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.6);
+}
+
+.mini-text {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: #f2efe6;
+  margin-top: 0.4rem;
+}
+
+.round-tag {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  background: rgba(255, 186, 0, 0.14);
+  border: 1px solid rgba(255, 186, 0, 0.45);
+  color: #ffba00;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* Bronze, lightened to a readable tint, for the second round. */
+.round-tag--bronze {
+  background: rgba(180, 102, 23, 0.2);
+  border-color: rgba(180, 102, 23, 0.6);
+  color: #e8a85c;
+}
+
+.prize-card {
+  position: relative;
+  padding: 1.75rem;
+  border-radius: 1.25rem;
+  background: rgba(255, 255, 255, 0.05);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 2px solid #ffba00;
+}
+
+.prize-card--second {
+  border-color: rgba(180, 102, 23, 0.75);
+}
+
+/* Champion badge: solid bronze fill, cream text — the premium moment. */
+.prize-badge {
+  position: absolute;
+  top: -0.85rem;
+  left: 1.25rem;
+  padding: 0.15rem 0.75rem;
+  border-radius: 9999px;
+  background: #b46617;
+  color: #fff3d6;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.prize-badge--amber {
+  background: #ffba00;
+  color: #1a1200;
+}
+
+.prize-amount {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 3rem;
+  font-weight: 900;
+  color: #ffba00;
+  margin-top: 0.25rem;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.6);
+}
+
+.prize-list {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.875rem;
+  color: #f2efe6;
+}
+
+.prize-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sponsor-card {
+  padding: 2rem;
+  border-radius: 1.25rem;
+  background: rgba(255, 255, 255, 0.05);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 186, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.contact-btn {
+  display: block;
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #f2efe6;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.contact-btn--wa {
+  background: rgba(255, 186, 0, 0.14);
+  border-color: rgba(255, 186, 0, 0.55);
+  color: #ffba00;
+}
+
+/* Registration chapter: its own inner layout, still inside the panel. */
+.register-panel {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.75rem;
+}
+
+@media (min-width: 768px) {
+  .register-panel {
+    flex-direction: row;
+    text-align: left;
+  }
+}
+
+.qr-box {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  background: #ffffff;
+  border-radius: 1rem;
+}
+
+/* Primary action: solid amber, near-black text. One CTA colour, everywhere. */
+.cta-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.5rem;
+  border-radius: 0.75rem;
+  background: #ffba00;
+  color: #1a1200;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight: 800;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  box-shadow: 0 8px 24px rgba(255, 186, 0, 0.35);
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cta-primary:hover {
+  background: #ffc933;
+  transform: translateY(-1px);
+  box-shadow: 0 12px 32px rgba(255, 186, 0, 0.45);
+}
+
+.cta-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.8rem 1.25rem;
+  border-radius: 0.75rem;
+  background: transparent;
+  border: 1px solid rgba(255, 186, 0, 0.5);
+  color: #ffba00;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8rem;
+  transition: background 0.2s ease;
+}
+
+.cta-secondary:hover {
+  background: rgba(255, 186, 0, 0.1);
+}
+
+/* Kept for other (non-scroll) sections if they use them. */
 .cyber-glow {
-  text-shadow: 0 0 12px rgba(0, 245, 160, 0.6), 0 0 25px rgba(0, 245, 160, 0.3);
-}
-
-.cyber-box-glow {
-  box-shadow: 0 0 25px -5px rgba(0, 245, 160, 0.25), 0 0 10px -2px rgba(0, 217, 245, 0.2);
+  text-shadow: 0 0 12px rgba(255, 186, 0, 0.45), 0 0 25px rgba(255, 186, 0, 0.25);
 }
 
 .cyber-card {
-  background: rgba(11, 17, 32, 0.75);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(0, 245, 160, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.13);
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .cyber-card:hover {
-  border-color: rgba(0, 245, 160, 0.5);
-  box-shadow: 0 0 30px rgba(0, 245, 160, 0.2);
+  border-color: rgba(255, 186, 0, 0.5);
+  box-shadow: 0 0 30px rgba(255, 186, 0, 0.15);
   transform: translateY(-2px);
-}
-
-/* Subtle scanlines effect */
-.scanlines {
-  background: linear-gradient(
-    rgba(18, 16, 16, 0) 50%, 
-    rgba(0, 0, 0, 0.25) 50%
-  ), linear-gradient(
-    90deg,
-    rgba(255, 0, 0, 0.03),
-    rgba(0, 255, 0, 0.01),
-    rgba(0, 0, 255, 0.03)
-  );
-  background-size: 100% 4px, 6px 100%;
-  pointer-events: none;
-}
-
-/* Cyber Grid background */
-.cyber-grid {
-  background-size: 40px 40px;
-  background-image: 
-    linear-gradient(to right, rgba(0, 245, 160, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(0, 245, 160, 0.05) 1px, transparent 1px);
 }
 
 /* Custom sleek scrollbar */
@@ -72,8 +435,8 @@ body {
 ::-webkit-scrollbar-thumb {
   background: #1e293b;
   border-radius: 4px;
-  border: 1px solid rgba(0, 245, 160, 0.2);
+  border: 1px solid rgba(255, 186, 0, 0.3);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #00f5a0;
+  background: #ffba00;
 }

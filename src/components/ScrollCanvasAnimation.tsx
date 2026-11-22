@@ -1,10 +1,49 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useCallback } from "react";
+/*
+ * BYTEON 2026 — fixed scroll experience.
+ *
+ * WHAT WAS WRONG (and what this file changes):
+ * 1. HAZE — the old code preloaded 238 lossy JPEG frames (57 KB each) and
+ *    upscaled them on a canvas. This version scrubs the ORIGINAL mp4
+ *    (public/byteon.mp4) with a <video> element, so the picture stays as
+ *    crisp as the source. Delete public/frames/ — it is no longer used.
+ * 2. BROKEN VIGNETTE — `bg-radial-gradient` is not a Tailwind class, so the
+ *    darkening behind the text never rendered. The scrim is now real CSS
+ *    (.video-scrim in globals.css) plus a uniform brightness cut on the video.
+ * 3. NO CONTRAST — emerald-300/70 text sat directly on the glowing green
+ *    video. Every word now sits inside .chapter-panel: a SOLID near-black
+ *    panel (not backdrop-blur, which is unreliable over canvas/video).
+ *    Headings are pure white, body copy is near-white, minimum 14px.
+ * 4. GHOSTING — all 8 chapters were stacked with a 500ms CSS transition
+ *    fighting the scroll, so two chapters showed at once. Chapters now get
+ *    one full screen of scroll each (800vh track = 100vh per chapter),
+ *    fade in/out with NO CSS transition, and only one is ever visible.
+ * 5. JANK — setScrollProgress() re-rendered all 8 chapters on every scroll
+ *    tick. Progress now lives in refs; chapter opacity is written straight
+ *    to the DOM in a rAF loop. React state changes only when the active
+ *    chapter changes (max 8 times per full scroll).
+ *
+ * DESIGN SYSTEM v2 (amber / bronze contrast):
+ *   Emerald stays structural (the live dot in the footer). Amber #FFBA00
+ *   does all the action: CTAs, key numbers, kickers, active dot, progress
+ *   bar (bronze #B46617 → amber gradient). Bronze is premium-only:
+ *   champion badge fill, second-round tag. Never bronze as small text.
+ *   Writing hierarchy: white headings, amber emphasis, warm paper
+ *   #F2EFE6 body, sage #A8BFAF meta. Panels are translucent
+ *   (blur + bottom-weighted gradient + text-shadow) so the video shows
+ *   through — video brightness raised 0.55 → 0.78. See globals.css.
+ *
+ * NOTE — facts marked UNVERIFIED below (rounds, timings, schedule,
+ * languages, certificates) are NOT on the event poster. They were carried
+ * over from the old code. Confirm them with the organisers before
+ * presenting this page as final.
+ */
+
+import React, { useEffect, useRef, useState } from "react";
 import {
   Terminal,
   Cpu,
-  Sparkles,
   ChevronDown,
   Award,
   Trophy,
@@ -13,17 +52,13 @@ import {
   Bug,
   Code2,
   Phone,
-  MessageSquare,
   Mail,
   QrCode,
   Image as ImageIcon,
   CheckCircle2,
   Check,
-  Gift,
-  ExternalLink,
-  ChevronRight,
+  Sparkles,
   Clock,
-  Layers,
 } from "lucide-react";
 
 interface ScrollCanvasAnimationProps {
@@ -31,927 +66,566 @@ interface ScrollCanvasAnimationProps {
   onPosterClick: () => void;
 }
 
-// 8 Defined Story Chapters across the full-page scroll sequence
+const CHAPTER_COUNT = 8;
+
 const CHAPTERS = [
-  { id: "hero", title: "01 // Initiation", range: [0.00, 0.12] },
-  { id: "about", title: "02 // Fest & Venue", range: [0.12, 0.27] },
-  { id: "rounds", title: "03 // Rounds & Rules", range: [0.27, 0.44] },
-  { id: "prizes", title: "04 // Bounties ₹9,000", range: [0.44, 0.61] },
-  { id: "schedule", title: "05 // Event Timeline", range: [0.61, 0.76] },
-  { id: "sponsors", title: "06 // Official Sponsors", range: [0.76, 0.86] },
-  { id: "coordinators", title: "07 // Helpdesk", range: [0.86, 0.94] },
-  { id: "register", title: "08 // Registration & QR", range: [0.94, 1.00] },
+  { id: "hero", title: "01 // Initiation" },
+  { id: "about", title: "02 // Fest & Venue" },
+  { id: "rounds", title: "03 // Rounds & Rules" },
+  { id: "prizes", title: "04 // Prizes ₹9,000" },
+  { id: "schedule", title: "05 // Event Timeline" },
+  { id: "sponsors", title: "06 // Official Sponsors" },
+  { id: "coordinators", title: "07 // Helpdesk" },
+  { id: "register", title: "08 // Registration & QR" },
+];
+
+/* One chapter = one equal slice of the scroll track. */
+const chapterRange = (i: number): [number, number] => [
+  i / CHAPTER_COUNT,
+  (i + 1) / CHAPTER_COUNT,
 ];
 
 export default function ScrollCanvasAnimation({
   onRegisterClick,
   onPosterClick,
 }: ScrollCanvasAnimationProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const chapterRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const progressBarRef = useRef<HTMLDivElement>(null);
 
-  // Preloading & readiness
-  const [loading, setLoading] = useState(true);
-  const [loadProgress, setLoadProgress] = useState(0);
+  const durationRef = useRef(0);
+  const smoothProgressRef = useRef(0);
+  const activeChapterRef = useRef(0);
+  const rafRef = useRef<number | null>(null);
 
-  // Scroll & animation progress (0.0 to 1.0)
-  const [scrollProgress, setScrollProgress] = useState(0);
-  const [activeChapterIndex, setActiveChapterIndex] = useState(0);
+  const [videoReady, setVideoReady] = useState(false);
+  const [videoMissing, setVideoMissing] = useState(false);
+  const [activeChapter, setActiveChapter] = useState(0);
   const [isReducedMotion, setIsReducedMotion] = useState(false);
 
-  // Image cache and RAF tracking
-  const imagesRef = useRef<HTMLImageElement[]>([]);
-  const currentFrameIndexRef = useRef<number>(-1);
-  const rafIdRef = useRef<number | null>(null);
-
-  // Total frames in the processor zoom out sequence
-  const TOTAL_FRAMES = 238;
-
-  // Frame URL formatter: frames/ezgif-frame-001.jpg -> ezgif-frame-238.jpg
-  const getFrameUrl = useCallback((frameNumber: number) => {
-    const padded = String(frameNumber).padStart(3, "0");
-    return `/frames/ezgif-frame-${padded}.jpg`;
-  }, []);
-
-  // 1. Draw frame to canvas maintaining full-screen 'cover' aspect ratio
-  const drawFrame = useCallback((frameIndex: number) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const img = imagesRef.current[frameIndex];
-    if (!img || !img.complete || img.naturalWidth === 0) return;
-
-    const canvasWidth = canvas.width;
-    const canvasHeight = canvas.height;
-    const imgWidth = img.naturalWidth;
-    const imgHeight = img.naturalHeight;
-
-    const canvasRatio = canvasWidth / canvasHeight;
-    const imgRatio = imgWidth / imgHeight;
-
-    let drawWidth = canvasWidth;
-    let drawHeight = canvasHeight;
-    let offsetX = 0;
-    let offsetY = 0;
-
-    // Cover math: scale to fill 100% of the screen without stretching or letterboxing
-    if (canvasRatio > imgRatio) {
-      drawHeight = canvasWidth / imgRatio;
-      offsetY = (canvasHeight - drawHeight) / 2;
-    } else {
-      drawWidth = canvasHeight * imgRatio;
-      offsetX = (canvasWidth - drawWidth) / 2;
-    }
-
-    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-    ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
-  }, []);
-
-  // 2. Resize canvas internal buffer to physical screen pixels for ultra-crisp output
-  const resizeCanvas = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const dpr = window.devicePixelRatio || 1;
-    const displayWidth = window.innerWidth;
-    const displayHeight = window.innerHeight;
-
-    if (canvas.width !== displayWidth * dpr || canvas.height !== displayHeight * dpr) {
-      canvas.width = displayWidth * dpr;
-      canvas.height = displayHeight * dpr;
-    }
-
-    if (currentFrameIndexRef.current >= 0) {
-      drawFrame(currentFrameIndexRef.current);
-    }
-  }, [drawFrame]);
-
-  // 3. Preload all frames on mount
+  /* Reduced motion: no scrubbing, show the poster still instead. */
   useEffect(() => {
-    // Check for prefers-reduced-motion
-    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (mediaQuery.matches) {
-      setIsReducedMotion(true);
-      // For reduced motion, load only the final frame
-      const singleImg = new Image();
-      singleImg.src = getFrameUrl(TOTAL_FRAMES);
-      singleImg.onload = () => {
-        imagesRef.current = [singleImg];
-        setLoadProgress(100);
-        setLoading(false);
-        currentFrameIndexRef.current = 0;
-        resizeCanvas();
-        drawFrame(0);
-      };
-      return;
-    }
+    setIsReducedMotion(
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    );
+  }, []);
 
-    // Mobile: if screen width < 768px, load every second frame (1, 3, 5, ...)
-    const isMobile = window.innerWidth < 768;
-    const frameStep = isMobile ? 2 : 1;
+  /*
+   * THE SCRUB LOOP — one rAF loop does everything, with no React
+   * re-render per frame:
+   *  - reads scroll position -> target progress 0..1
+   *  - eases towards it (lerp) so the video glides instead of stepping
+   *  - sets video.currentTime from the eased progress
+   *  - writes each chapter's opacity straight to its DOM node
+   */
+  useEffect(() => {
+    if (isReducedMotion) return;
 
-    const frameIndices: number[] = [];
-    for (let i = 1; i <= TOTAL_FRAMES; i += frameStep) {
-      frameIndices.push(i);
-    }
+    const tick = () => {
+      const track = trackRef.current;
+      if (track) {
+        const rect = track.getBoundingClientRect();
+        const maxScroll = rect.height - window.innerHeight;
+        const target = Math.max(
+          0,
+          Math.min(1, -rect.top / Math.max(1, maxScroll))
+        );
 
-    const totalToLoad = frameIndices.length;
-    let loadedCount = 0;
-    const preloadedImages: HTMLImageElement[] = new Array(totalToLoad);
+        // Ease: 0.14 = smooth glide, still stops exactly where you stop.
+        smoothProgressRef.current +=
+          (target - smoothProgressRef.current) * 0.14;
+        const p = smoothProgressRef.current;
 
-    frameIndices.forEach((frameNum, index) => {
-      const img = new Image();
-      img.src = getFrameUrl(frameNum);
-
-      const onImageLoad = () => {
-        loadedCount += 1;
-        setLoadProgress(Math.round((loadedCount / totalToLoad) * 100));
-
-        if (loadedCount === totalToLoad) {
-          imagesRef.current = preloadedImages;
-          setLoading(false);
-          currentFrameIndexRef.current = 0;
-          resizeCanvas();
-          drawFrame(0);
+        const video = videoRef.current;
+        if (video && durationRef.current > 0 && videoReady) {
+          const t = p * (durationRef.current - 0.05);
+          // Only seek when it actually moved — avoids seek thrash.
+          if (Math.abs(video.currentTime - t) > 0.03) {
+            video.currentTime = t;
+          }
         }
-      };
 
-      img.onload = onImageLoad;
-      img.onerror = onImageLoad;
-      preloadedImages[index] = img;
+        // Active chapter (state update only when it changes).
+        const idx = Math.min(
+          CHAPTER_COUNT - 1,
+          Math.floor(p * CHAPTER_COUNT)
+        );
+        if (idx !== activeChapterRef.current) {
+          activeChapterRef.current = idx;
+          setActiveChapter(idx);
+        }
+
+        // Progress bar (DOM write, no re-render).
+        if (progressBarRef.current) {
+          progressBarRef.current.style.width = `${(p * 100).toFixed(1)}%`;
+        }
+
+        // One chapter visible at a time: fade in 0–18%, hold, fade out 82–100%.
+        chapterRefs.current.forEach((el, i) => {
+          if (!el) return;
+          const [start, end] = chapterRange(i);
+          const local = (p - start) / (end - start); // 0..1 inside this chapter
+          let opacity = 0;
+          if (local >= 0 && local <= 1) {
+            if (local < 0.18) opacity = local / 0.18;
+            else if (local > 0.82) opacity = (1 - local) / 0.18;
+            else opacity = 1;
+          }
+          el.style.opacity = opacity.toFixed(3);
+          el.style.visibility = opacity <= 0.01 ? "hidden" : "visible";
+          el.style.pointerEvents = opacity > 0.6 ? "auto" : "none";
+        });
+      }
+      rafRef.current = requestAnimationFrame(tick);
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    };
+  }, [isReducedMotion, videoReady]);
+
+  const jumpToChapter = (index: number) => {
+    const track = trackRef.current;
+    if (!track) return;
+    const maxScroll = track.offsetHeight - window.innerHeight;
+    window.scrollTo({
+      top: track.offsetTop + (index / CHAPTER_COUNT) * maxScroll,
+      behavior: "smooth",
     });
-
-    return () => {
-      preloadedImages.forEach((img) => {
-        img.onload = null;
-        img.onerror = null;
-      });
-    };
-  }, [TOTAL_FRAMES, getFrameUrl, resizeCanvas, drawFrame]);
-
-  // 4. Scroll-linked frame update using requestAnimationFrame
-  useEffect(() => {
-    if (loading || isReducedMotion) return;
-
-    /*
-     * =========================================================================
-     * SCROLL-TO-FRAME MAPPING & SPEED ADJUSTMENT:
-     * =========================================================================
-     * The container height (750vh) spans the full website's interactive scrub.
-     * - scrolledDistance: scroll offset from container top.
-     * - maxScrollDistance: container height minus window innerHeight.
-     * - fraction: normalized 0.0 to 1.0 representing progress across the whole site.
-     *
-     * SPEED TUNING GUIDE:
-     * - TO MAKE ANIMATION SLOWER (more scroll distance needed per frame):
-     *     Increase container height below (e.g. from 'h-[750vh]' to 'h-[900vh]').
-     * - TO MAKE ANIMATION FASTER (less scroll distance needed per frame):
-     *     Decrease container height below (e.g. from 'h-[750vh]' to 'h-[550vh]').
-     * =========================================================================
-     */
-    const updateFrameOnScroll = () => {
-      const container = containerRef.current;
-      if (!container) return;
-
-      const rect = container.getBoundingClientRect();
-      const containerTop = rect.top;
-      const containerHeight = rect.height;
-      const windowHeight = window.innerHeight;
-
-      const scrolledDistance = -containerTop;
-      const maxScrollDistance = containerHeight - windowHeight;
-
-      let fraction = scrolledDistance / maxScrollDistance;
-      fraction = Math.max(0, Math.min(1, fraction));
-
-      setScrollProgress(fraction);
-
-      // Determine active chapter for HUD indicator
-      const activeIdx = CHAPTERS.findIndex(
-        (ch) => fraction >= ch.range[0] && fraction <= ch.range[1]
-      );
-      if (activeIdx !== -1) {
-        setActiveChapterIndex(activeIdx);
-      }
-
-      const totalImages = imagesRef.current.length;
-      if (totalImages === 0) return;
-
-      // Map progress fraction to frame index
-      const targetFrame = Math.min(
-        Math.floor(fraction * (totalImages - 1)),
-        totalImages - 1
-      );
-
-      // Repaint ONLY if the frame index has changed!
-      if (targetFrame !== currentFrameIndexRef.current) {
-        currentFrameIndexRef.current = targetFrame;
-        drawFrame(targetFrame);
-      }
-
-      rafIdRef.current = null;
-    };
-
-    const onScroll = () => {
-      if (rafIdRef.current === null) {
-        rafIdRef.current = requestAnimationFrame(updateFrameOnScroll);
-      }
-    };
-
-    const onResize = () => {
-      resizeCanvas();
-    };
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onResize, { passive: true });
-
-    updateFrameOnScroll();
-
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onResize);
-      if (rafIdRef.current !== null) {
-        cancelAnimationFrame(rafIdRef.current);
-      }
-    };
-  }, [loading, isReducedMotion, drawFrame, resizeCanvas]);
-
-  // Jump to specific chapter when clicking side navigation dots
-  const jumpToChapter = (startFraction: number) => {
-    const container = containerRef.current;
-    if (!container) return;
-    const maxScrollDistance = container.offsetHeight - window.innerHeight;
-    const targetScrollY = container.offsetTop + startFraction * maxScrollDistance;
-    window.scrollTo({ top: targetScrollY, behavior: "smooth" });
   };
 
-  // Helper to calculate smooth opacity & translateY for any chapter
-  const getChapterStyle = (start: number, end: number) => {
-    const buffer = 0.03; // transition feathering
-    if (scrollProgress < start - buffer || scrollProgress > end + buffer) {
-      return { opacity: 0, pointerEvents: "none" as const, transform: "scale(0.96) translateY(20px)" };
-    }
+  /* ------------------------------------------------------------------ */
+  /* Chapter content. Every chapter renders inside .chapter-panel,      */
+  /* a SOLID panel — that is the whole contrast fix.                     */
+  /* ------------------------------------------------------------------ */
 
-    let opacity = 1;
-    if (scrollProgress < start + buffer) {
-      opacity = (scrollProgress - (start - buffer)) / (2 * buffer);
-    } else if (scrollProgress > end - buffer) {
-      opacity = (end + buffer - scrollProgress) / (2 * buffer);
-    }
-    opacity = Math.max(0, Math.min(1, opacity));
-
-    const translateY = (1 - opacity) * 15;
-    return {
-      opacity,
-      transform: `translateY(${translateY}px)`,
-      pointerEvents: opacity > 0.4 ? ("auto" as const) : ("none" as const),
-    };
-  };
-
-  return (
-    /*
-     * The tall 750vh scroll track anchors the ENTIRE website journey.
-     * The canvas remains permanently fixed full-screen in the background,
-     * while the chapters reveal their contents smoothly on each scroll.
-     */
-    <div
-      ref={containerRef}
-      className="relative w-full h-[750vh] bg-[#050811] text-emerald-100"
-    >
-      {/* 
-        FIXED FULL-SCREEN CANVAS BACKGROUND 
-        Covers the whole screen across all scrolls (Apple & EDL Inc style)
-      */}
-      <div className="fixed inset-0 w-screen h-screen overflow-hidden z-0 pointer-events-none">
-        <canvas
-          ref={canvasRef}
-          className="absolute inset-0 w-full h-full object-cover block select-none"
-        />
-
-        {/* Ambient cyber scanlines & high-contrast readability vignette */}
-        <div className="absolute inset-0 bg-radial-gradient from-black/20 via-black/50 to-[#050811]/95" />
-        <div className="absolute inset-0 scanlines opacity-25" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#050811] via-transparent to-[#050811]/80" />
+  const chapterBody: React.ReactNode[] = [
+    /* 1 — HERO */
+    <>
+      <div className="chip">
+        <Terminal className="w-4 h-4 text-[#FFBA00]" />
+        Zypherix 2026 // National Level IT Fest
       </div>
+      <h1 className="hero-title">BYTEON</h1>
+      <p className="mt-3 text-xl sm:text-3xl font-mono font-bold tracking-wider text-[#FFBA00]">
+        CODING CHALLENGE <span className="date-pill">27 JAN</span>
+      </p>
+      <p className="body-text mt-4 max-w-lg">
+        One screen, one scroll, one event. Keep scrolling — each detail of
+        the contest appears on its own screen.
+      </p>
+      <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-sm font-mono">
+        <span className="fact-pill">₹9,000 Total Prize Pool</span>
+        <span className="fact-pill">Jamia Hamdard Kannur Campus</span>
+        <span className="fact-pill">27–28 January 2026</span>
+      </div>
+      <div className="mt-8 flex items-center gap-2 text-sm font-mono text-white animate-bounce">
+        <span>SCROLL TO STEP THROUGH THE EVENT</span>
+        <ChevronDown className="w-4 h-4 text-[#FFBA00]" />
+      </div>
+    </>,
 
-      {/* Preloading Screen */}
-      {loading && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#050811] text-emerald-400 p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <Cpu className="w-8 h-8 text-[#00f5a0] animate-spin" />
-            <span className="font-mono text-xs tracking-widest uppercase text-emerald-400/80">
-              // Zypherix Hardware Neural Bus
+    /* 2 — FEST & VENUE */
+    <>
+      <div className="chip">
+        <MapPin className="w-4 h-4 text-[#FFBA00]" />
+        Chapter 02 // Venue &amp; Fest
+      </div>
+      <h2 className="chapter-title">
+        WHERE LOGIC MEETS
+        <span className="accent-text"> RAW COMPUTING POWER</span>
+      </h2>
+      <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-4xl text-left">
+        <div className="mini-card">
+          <span className="mini-label">// FEST</span>
+          <h3 className="mini-heading">ZYPHERIX &apos;26</h3>
+          <p className="mini-text">
+            National Level IT Fest spanning 27 &amp; 28 January 2026.
+          </p>
+        </div>
+        <div className="mini-card mini-card--hot">
+          <span className="mini-label">// EVENT</span>
+          <h3 className="mini-heading">BYTEON CODING</h3>
+          <p className="mini-text">
+            The coding contest of the fest — held on 27 January 2026.
+          </p>
+        </div>
+        <div className="mini-card">
+          <span className="mini-label">// VENUE</span>
+          <h3 className="mini-heading">JAMIA HAMDARD</h3>
+          <p className="mini-text">Kannur Campus, Kerala.</p>
+        </div>
+      </div>
+    </>,
+
+    /* 3 — ROUNDS & RULES (UNVERIFIED — not on the poster) */
+    <>
+      <div className="chip">
+        <Code2 className="w-4 h-4 text-[#FFBA00]" />
+        Chapter 03 // Competition Structure
+      </div>
+      <h2 className="chapter-title">TWO ROUNDS</h2>
+      <p className="verify-note">
+        Details below are from the previous draft, not the poster — confirm
+        with the organisers before publishing.
+      </p>
+      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-4xl text-left">
+        <div className="mini-card">
+          <div className="flex items-center justify-between">
+            <span className="round-tag">ROUND 01</span>
+            <span className="flex items-center gap-1 text-sm font-mono text-white">
+              <Clock className="w-4 h-4 text-[#FFBA00]" /> 45 Minutes
             </span>
           </div>
-
-          <div className="text-4xl sm:text-6xl font-black tracking-tighter text-white mb-2 font-mono">
-            BYTEON<span className="text-[#00f5a0]">.2026</span>
-          </div>
-          <p className="text-xs sm:text-sm font-mono text-emerald-300/70 mb-8 tracking-wider">
-            SYNCHRONIZING SILICON ANIMATION BUFFER [{loadProgress}%]
+          <h3 className="mini-heading mt-3 flex items-center gap-2">
+            <Bug className="w-5 h-5 text-[#FFBA00]" /> Syntax Hunt &amp;
+            Debugging
+          </h3>
+          <p className="mini-text">
+            Find the flaws, fix broken snippets, predict the output — against
+            the clock. Top scorers advance.
           </p>
-
-          <div className="w-64 sm:w-80 h-2 bg-emerald-950/60 rounded-full overflow-hidden border border-emerald-500/30 p-0.5">
-            <div
-              className="h-full bg-gradient-to-r from-emerald-500 via-[#00f5a0] to-[#00d9f5] rounded-full transition-all duration-150 ease-out shadow-[0_0_12px_#00f5a0]"
-              style={{ width: `${loadProgress}%` }}
-            />
-          </div>
-
-          <div className="mt-4 font-mono text-xs text-emerald-400/50 flex items-center gap-2">
-            <span className="inline-block w-2 h-2 rounded-full bg-[#00f5a0] animate-ping" />
-            Preloading 238 full-resolution sequence frames...
-          </div>
         </div>
-      )}
-
-      {/* 
-        FIXED HUD OVERLAYS (Navigation, Scrubber, Frame Status)
-      */}
-      {!loading && (
-        <>
-          {/* Top Fixed Bar */}
-          <header className="fixed top-0 left-0 right-0 z-30 px-4 sm:px-8 py-4 flex items-center justify-between backdrop-blur-md bg-black/40 border-b border-emerald-500/20">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-[#00f5a0]/15 border border-[#00f5a0]/40 flex items-center justify-center text-[#00f5a0] shadow-[0_0_15px_rgba(0,245,160,0.3)]">
-                <Terminal className="w-5 h-5" />
-              </div>
-              <div>
-                <span className="font-mono font-black text-white text-base tracking-wider flex items-center gap-1.5">
-                  BYTEON <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-[#00f5a0] border border-emerald-500/30 font-bold">2026</span>
-                </span>
-                <p className="text-[10px] font-mono uppercase tracking-widest text-emerald-400/70 -mt-1">
-                  Zypherix National IT Fest • 27, 28 Jan
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <button
-                onClick={onPosterClick}
-                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/60 border border-emerald-500/30 text-emerald-300 text-xs font-mono transition-all"
-              >
-                <ImageIcon className="w-3.5 h-3.5 text-[#00f5a0]" />
-                <span>Event Poster</span>
-              </button>
-
-              <button
-                onClick={onRegisterClick}
-                className="px-4 sm:px-5 py-2 rounded-xl bg-gradient-to-r from-[#00f5a0] to-[#00d9f5] text-black font-mono font-extrabold text-xs tracking-wider shadow-[0_0_20px_rgba(0,245,160,0.4)] hover:shadow-[0_0_30px_rgba(0,245,160,0.7)] transition-all transform hover:-translate-y-0.5 flex items-center gap-1.5"
-              >
-                <QrCode className="w-3.5 h-3.5" />
-                <span>REGISTER NOW</span>
-              </button>
-            </div>
-          </header>
-
-          {/* Right Floating Chapter Scrubber Dots */}
-          <nav
-            aria-label="Chapter timeline"
-            className="fixed right-3 sm:right-6 top-1/2 -translate-y-1/2 z-30 hidden md:flex flex-col gap-3 p-2.5 rounded-2xl bg-black/60 border border-emerald-500/30 backdrop-blur-xl shadow-[0_0_30px_rgba(0,0,0,0.8)]"
-          >
-            {CHAPTERS.map((ch, idx) => {
-              const isActive = activeChapterIndex === idx;
-              return (
-                <button
-                  key={ch.id}
-                  onClick={() => jumpToChapter(ch.range[0])}
-                  className="group relative flex items-center justify-end"
-                >
-                  {/* Tooltip on hover */}
-                  <span className="absolute right-7 px-2.5 py-1 rounded-md bg-black/90 border border-emerald-500/40 text-[10px] font-mono whitespace-nowrap text-emerald-200 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-[0_0_10px_rgba(0,245,160,0.2)]">
-                    {ch.title}
-                  </span>
-                  
-                  {/* Dot */}
-                  <div
-                    className={`transition-all duration-300 rounded-full flex items-center justify-center ${
-                      isActive
-                        ? "w-4 h-4 bg-[#00f5a0] shadow-[0_0_12px_#00f5a0]"
-                        : "w-2.5 h-2.5 bg-emerald-950 border border-emerald-500/40 group-hover:bg-[#00f5a0]/50"
-                    }`}
-                  >
-                    {isActive && <div className="w-1.5 h-1.5 rounded-full bg-black" />}
-                  </div>
-                </button>
-              );
-            })}
-          </nav>
-
-          {/* Bottom Fixed Status Bar */}
-          <footer className="fixed bottom-0 left-0 right-0 z-30 px-4 sm:px-8 py-3 flex items-center justify-between text-[11px] font-mono text-emerald-400/70 backdrop-blur-md bg-black/50 border-t border-emerald-500/20">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#00f5a0] animate-pulse" />
-              <span className="hidden sm:inline">CURRENT CHAPTER:</span>
-              <span className="text-white font-bold">{CHAPTERS[activeChapterIndex]?.title}</span>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <span className="hidden sm:inline">FRAME: {currentFrameIndexRef.current + 1} / {imagesRef.current.length || TOTAL_FRAMES}</span>
-              <span>ZOOM SCRUB: {(scrollProgress * 100).toFixed(0)}%</span>
-            </div>
-          </footer>
-        </>
-      )}
-
-      {/* 
-        STICKY FULL-SCREEN VIEWPORT HOLDING THE SCROLL-LINKED CHAPTERS
-      */}
-      <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center z-10 pointer-events-none">
-        
-        <div className="relative w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-center">
-
-          {/* ========================================================================= */}
-          {/* CHAPTER 1: INITIATION & HERO (0% - 12%)                                  */}
-          {/* ========================================================================= */}
-          <div
-            className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 transition-all duration-500"
-            style={getChapterStyle(0.00, 0.12)}
-          >
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-950/80 border border-emerald-400/40 text-emerald-300 text-xs sm:text-sm font-mono tracking-widest uppercase mb-4 shadow-[0_0_20px_rgba(0,245,160,0.3)]">
-              <Terminal className="w-4 h-4 text-[#00f5a0]" />
-              Zypherix 2026 // National Level IT Fest
-            </div>
-
-            <h1 className="text-6xl sm:text-8xl md:text-9xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white via-emerald-100 to-[#00f5a0] drop-shadow-[0_0_40px_rgba(0,245,160,0.5)] font-mono">
-              BYTEON
-            </h1>
-
-            <p className="mt-2 text-xl sm:text-3xl font-mono text-[#00f5a0] font-bold tracking-wider flex items-center gap-3">
-              <span>CODING CHALLENGE</span>
-              <span className="text-xs px-2.5 py-1 rounded bg-emerald-900/60 border border-emerald-400/40 text-emerald-200">
-                27 JAN
-              </span>
-            </p>
-
-            <p className="mt-3 text-xs sm:text-sm font-mono text-emerald-300/80 max-w-md">
-              Camera deep inside the silicon microarchitecture. Scroll down to zoom out and traverse the event details.
-            </p>
-
-            {/* Quick Hero Highlights */}
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-xs font-mono">
-              <span className="px-3 py-1.5 rounded-lg bg-black/70 border border-emerald-500/30 text-white">
-                💰 ₹9,000 Total Prize Pool
-              </span>
-              <span className="px-3 py-1.5 rounded-lg bg-black/70 border border-emerald-500/30 text-white">
-                📍 Jamia Hamdard Kannur Campus
-              </span>
-              <span className="px-3 py-1.5 rounded-lg bg-black/70 border border-emerald-500/30 text-white">
-                ⚡ Powered by Upcode & Infomac
-              </span>
-            </div>
-
-            <div className="mt-8 flex items-center gap-2 text-xs font-mono text-emerald-400/80 animate-bounce">
-              <span>SCROLL TO STEP THROUGH SYSTEM</span>
-              <ChevronDown className="w-4 h-4 text-[#00f5a0]" />
-            </div>
+        <div className="mini-card">
+          <div className="flex items-center justify-between">
+            <span className="round-tag round-tag--bronze">ROUND 02</span>
+            <span className="flex items-center gap-1 text-sm font-mono text-white">
+              <Clock className="w-4 h-4 text-[#E8A85C]" /> 90 Minutes
+            </span>
           </div>
-
-          {/* ========================================================================= */}
-          {/* CHAPTER 2: FEST, EVENT & VENUE (12% - 27%)                                */}
-          {/* ========================================================================= */}
-          <div
-            className="absolute inset-0 flex flex-col items-center justify-center p-4 transition-all duration-500"
-            style={getChapterStyle(0.12, 0.27)}
-          >
-            <div className="max-w-3xl w-full text-center mb-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/80 border border-[#00d9f5]/40 text-[#00d9f5] text-xs font-mono tracking-widest uppercase mb-3">
-                <MapPin className="w-3.5 h-3.5" />
-                Chapter 02 // Venue & Fest
-              </div>
-              <h2 className="text-3xl sm:text-5xl font-black text-white font-mono tracking-tight">
-                WHERE LOGIC MEETS <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00f5a0] to-[#00d9f5]">
-                  RAW COMPUTING POWER
-                </span>
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-4xl">
-              <div className="p-6 rounded-2xl bg-black/75 border border-emerald-500/30 backdrop-blur-xl shadow-[0_0_25px_rgba(0,0,0,0.8)]">
-                <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest">// FEST</span>
-                <h3 className="text-xl font-bold font-mono text-white mt-1">ZYPHERIX '26</h3>
-                <p className="text-xs font-mono text-emerald-300/70 mt-2">
-                  National Level IT Fest spanning 27 & 28 January. Gathering tech enthusiasts and developers across India.
-                </p>
-              </div>
-
-              <div className="p-6 rounded-2xl bg-black/75 border border-[#00f5a0]/50 backdrop-blur-xl shadow-[0_0_30px_rgba(0,245,160,0.2)]">
-                <span className="text-xs font-mono text-[#00f5a0] uppercase tracking-widest">// EVENT</span>
-                <h3 className="text-xl font-bold font-mono text-white mt-1">BYTEON CODING</h3>
-                <p className="text-xs font-mono text-emerald-300/70 mt-2">
-                  Scheduled for 27 January 2026. Fast-paced individual coding battle featuring algorithmic mastery.
-                </p>
-              </div>
-
-              <div className="p-6 rounded-2xl bg-black/75 border border-cyan-500/30 backdrop-blur-xl shadow-[0_0_25px_rgba(0,0,0,0.8)]">
-                <span className="text-xs font-mono text-[#00d9f5] uppercase tracking-widest">// VENUE</span>
-                <h3 className="text-lg font-bold font-mono text-white mt-1">JAMIA HAMDARD</h3>
-                <p className="text-xs font-mono text-emerald-300/70 mt-2">
-                  Kannur Campus, Kerala. High-speed laboratory workstations and offline compilation terminals provided.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* ========================================================================= */}
-          {/* CHAPTER 3: COMPETITION ROUNDS & RULES (27% - 44%)                         */}
-          {/* ========================================================================= */}
-          <div
-            className="absolute inset-0 flex flex-col items-center justify-center p-4 transition-all duration-500"
-            style={getChapterStyle(0.27, 0.44)}
-          >
-            <div className="max-w-3xl w-full text-center mb-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-400/40 text-emerald-300 text-xs font-mono tracking-widest uppercase mb-3">
-                <Code2 className="w-3.5 h-3.5 text-[#00f5a0]" />
-                Chapter 03 // Competition Structure
-              </div>
-              <h2 className="text-3xl sm:text-5xl font-black text-white font-mono">
-                TWO RIGOROUS ROUNDS
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-4xl">
-              {/* Round 1 */}
-              <div className="p-6 sm:p-8 rounded-3xl bg-black/80 border-2 border-emerald-500/40 backdrop-blur-xl shadow-[0_0_30px_rgba(0,245,160,0.15)]">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/40 text-xs font-mono font-bold text-[#00f5a0]">
-                    ROUND 01
-                  </span>
-                  <span className="text-xs font-mono text-emerald-400/70">⏱ 45 Minutes</span>
-                </div>
-                <h3 className="text-2xl font-bold font-mono text-white mb-2 flex items-center gap-2">
-                  <Bug className="w-5 h-5 text-[#00f5a0]" />
-                  Syntax Hunt & Rapid Debugging
-                </h3>
-                <p className="text-xs sm:text-sm font-mono text-emerald-200/80 mb-4">
-                  Identify syntax flaws, rectify broken snippets, and deduce output predictions against the clock.
-                </p>
-                <div className="space-y-1.5 text-xs font-mono text-emerald-300/80 border-t border-emerald-500/20 pt-3">
-                  <div className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-[#00f5a0]" />
-                    <span>Time complexity & output prediction</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-[#00f5a0]" />
-                    <span>Top scorers advance to Round 02</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Round 2 */}
-              <div className="p-6 sm:p-8 rounded-3xl bg-black/80 border-2 border-cyan-500/40 backdrop-blur-xl shadow-[0_0_30px_rgba(0,217,245,0.15)]">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/40 text-xs font-mono font-bold text-[#00d9f5]">
-                    ROUND 02
-                  </span>
-                  <span className="text-xs font-mono text-cyan-400/70">⏱ 90 Minutes</span>
-                </div>
-                <h3 className="text-2xl font-bold font-mono text-white mb-2 flex items-center gap-2">
-                  <Terminal className="w-5 h-5 text-[#00d9f5]" />
-                  The Core Algorithmic Arena
-                </h3>
-                <p className="text-xs sm:text-sm font-mono text-emerald-200/80 mb-4">
-                  Championship sprint. Solve complex algorithmic challenges with optimal space and time complexities.
-                </p>
-                <div className="space-y-1.5 text-xs font-mono text-emerald-300/80 border-t border-emerald-500/20 pt-3">
-                  <div className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-[#00d9f5]" />
-                    <span>Automated test-case evaluation</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-[#00d9f5]" />
-                    <span>Live ranking & execution benchmarks</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Supported languages banner */}
-            <div className="mt-4 px-4 py-2 rounded-xl bg-black/70 border border-emerald-500/20 text-xs font-mono text-emerald-300 flex items-center gap-3">
-              <span className="text-emerald-400/70">LANGUAGES:</span>
-              <span className="text-white font-bold">C • C++ • Python • Java • JavaScript</span>
-            </div>
-          </div>
-
-          {/* ========================================================================= */}
-          {/* CHAPTER 4: PRIZES & BOUNTIES (44% - 61%)                                  */}
-          {/* ========================================================================= */}
-          <div
-            className="absolute inset-0 flex flex-col items-center justify-center p-4 transition-all duration-500"
-            style={getChapterStyle(0.44, 0.61)}
-          >
-            <div className="max-w-3xl w-full text-center mb-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-400/40 text-[#00f5a0] text-xs font-mono tracking-widest uppercase mb-3">
-                <Trophy className="w-3.5 h-3.5" />
-                Chapter 04 // Bounties & Stakes
-              </div>
-              <h2 className="text-4xl sm:text-6xl font-black text-white font-mono">
-                TOTAL POOL <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00f5a0] to-[#00d9f5]">₹9,000/-</span>
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-4xl">
-              {/* First Prize */}
-              <div className="relative p-6 sm:p-8 rounded-3xl bg-black/85 border-2 border-[#00f5a0] backdrop-blur-2xl shadow-[0_0_40px_rgba(0,245,160,0.3)]">
-                <div className="absolute -top-3.5 left-6 px-3 py-0.5 rounded-full bg-[#00f5a0] text-black font-mono font-black text-xs uppercase tracking-widest shadow-[0_0_15px_#00f5a0]">
-                  CHAMPION
-                </div>
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <span className="text-xs font-mono uppercase tracking-widest text-emerald-400">First Prize</span>
-                    <div className="text-5xl sm:text-6xl font-black text-white font-mono mt-1">
-                      6000<span className="text-2xl text-[#00f5a0]">/-</span>
-                    </div>
-                  </div>
-                  <div className="w-14 h-14 rounded-2xl bg-emerald-500/15 border border-[#00f5a0]/40 flex items-center justify-center text-[#00f5a0]">
-                    <Trophy className="w-8 h-8" />
-                  </div>
-                </div>
-                <ul className="space-y-2 text-xs font-mono text-emerald-200/90 border-t border-emerald-500/20 pt-4">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-[#00f5a0]" />
-                    <span>₹6,000 Cash Prize</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-[#00f5a0]" />
-                    <span>Winner Trophy & Shield</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-[#00f5a0]" />
-                    <span>Certificate of Excellence</span>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Second Prize */}
-              <div className="relative p-6 sm:p-8 rounded-3xl bg-black/85 border-2 border-cyan-400/50 backdrop-blur-2xl shadow-[0_0_40px_rgba(0,217,245,0.25)]">
-                <div className="absolute -top-3.5 left-6 px-3 py-0.5 rounded-full bg-[#00d9f5] text-black font-mono font-black text-xs uppercase tracking-widest shadow-[0_0_15px_#00d9f5]">
-                  RUNNER-UP
-                </div>
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <span className="text-xs font-mono uppercase tracking-widest text-[#00d9f5]">Second Prize</span>
-                    <div className="text-5xl sm:text-6xl font-black text-white font-mono mt-1">
-                      3000<span className="text-2xl text-cyan-400">/-</span>
-                    </div>
-                  </div>
-                  <div className="w-14 h-14 rounded-2xl bg-cyan-500/15 border border-cyan-400/40 flex items-center justify-center text-[#00d9f5]">
-                    <Award className="w-8 h-8" />
-                  </div>
-                </div>
-                <ul className="space-y-2 text-xs font-mono text-emerald-200/90 border-t border-cyan-500/20 pt-4">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-[#00d9f5]" />
-                    <span>₹3,000 Cash Prize</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-[#00d9f5]" />
-                    <span>Runner-up Trophy</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-[#00d9f5]" />
-                    <span>Certificate of Merit</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            <div className="mt-4 px-4 py-2 rounded-xl bg-black/60 border border-emerald-500/20 text-xs font-mono text-emerald-300">
-              🎖 Official National Certificates awarded to all verified participants.
-            </div>
-          </div>
-
-          {/* ========================================================================= */}
-          {/* CHAPTER 5: EVENT TIMELINE & SCHEDULE (61% - 76%)                          */}
-          {/* ========================================================================= */}
-          <div
-            className="absolute inset-0 flex flex-col items-center justify-center p-4 transition-all duration-500"
-            style={getChapterStyle(0.61, 0.76)}
-          >
-            <div className="max-w-3xl w-full text-center mb-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-400/40 text-emerald-300 text-xs font-mono tracking-widest uppercase mb-3">
-                <Calendar className="w-3.5 h-3.5 text-[#00f5a0]" />
-                Chapter 05 // Day Schedule (27 Jan)
-              </div>
-              <h2 className="text-3xl sm:text-5xl font-black text-white font-mono">
-                TIMELINE OF THE ARENA
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5 w-full max-w-4xl">
-              {[
-                { time: "09:00 AM", title: "Reporting & Check-in", desc: "Badge collection at Jamia Hamdard desk." },
-                { time: "10:00 AM", title: "Inaugural & Rules Brief", desc: "Coordinators present guidelines & setup." },
-                { time: "10:30 AM", title: "Round 1: Rapid Debug", desc: "45-minute sprint of bug hunt & MCQ output." },
-                { time: "01:00 PM", title: "Lunch & Networking", desc: "Complimentary lunch & sponsor booth." },
-                { time: "02:00 PM", title: "Round 2: Algorithmic Duel", desc: "Qualifiers compete on live problem sets." },
-                { time: "04:30 PM", title: "Grand Valedictory", desc: "Presentation of ₹6000 & ₹3000 cash prizes." },
-              ].map((ev, i) => (
-                <div key={i} className="p-4 rounded-2xl bg-black/80 border border-emerald-500/30 backdrop-blur-xl">
-                  <span className="font-mono text-xs font-bold text-[#00f5a0]">{ev.time}</span>
-                  <h4 className="font-mono text-sm font-bold text-white mt-1">{ev.title}</h4>
-                  <p className="font-mono text-[11px] text-emerald-300/70 mt-1">{ev.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* ========================================================================= */}
-          {/* CHAPTER 6: OFFICIAL SPONSORS (76% - 86%)                                  */}
-          {/* ========================================================================= */}
-          <div
-            className="absolute inset-0 flex flex-col items-center justify-center p-4 transition-all duration-500"
-            style={getChapterStyle(0.76, 0.86)}
-          >
-            <div className="max-w-3xl w-full text-center mb-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-400/40 text-emerald-300 text-xs font-mono tracking-widest uppercase mb-3">
-                <Cpu className="w-3.5 h-3.5 text-[#00f5a0]" />
-                Chapter 06 // Corporate Backing
-              </div>
-              <h2 className="text-3xl sm:text-5xl font-black text-white font-mono">
-                OFFICIAL SPONSORS
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 w-full max-w-3xl">
-              {/* Upcode */}
-              <div className="p-8 rounded-3xl bg-black/85 border-2 border-emerald-500/40 backdrop-blur-xl flex flex-col items-center text-center shadow-[0_0_30px_rgba(0,245,160,0.2)]">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="grid grid-cols-2 gap-1 w-6 h-6">
-                    <div className="bg-[#00f5a0] w-2.5 h-2.5 rounded-sm" />
-                    <div className="bg-[#00d9f5] w-2.5 h-2.5 rounded-sm" />
-                    <div className="bg-emerald-700 w-2.5 h-2.5 rounded-sm" />
-                    <div className="bg-white w-2.5 h-2.5 rounded-sm" />
-                  </div>
-                  <span className="text-3xl font-black text-white font-mono tracking-tight">
-                    upcode.
-                  </span>
-                </div>
-                <span className="text-xs font-mono tracking-widest uppercase text-emerald-400 font-bold">
-                  SOFTWARE LABS
-                </span>
-                <p className="text-xs font-mono text-emerald-300/70 mt-4">
-                  Official Technical Partner • Software Engineering, Cloud Infrastructure & Talent Mentorship.
-                </p>
-              </div>
-
-              {/* Infomac */}
-              <div className="p-8 rounded-3xl bg-black/85 border-2 border-cyan-500/40 backdrop-blur-xl flex flex-col items-center text-center shadow-[0_0_30px_rgba(0,217,245,0.2)]">
-                <div className="flex items-center gap-3 mb-2">
-                  <Cpu className="w-8 h-8 text-[#00d9f5]" />
-                  <span className="text-3xl font-black text-white font-mono tracking-wider">
-                    INFOMAC
-                  </span>
-                </div>
-                <span className="text-xs font-mono tracking-widest uppercase text-cyan-400 font-bold">
-                  SYSTEMS
-                </span>
-                <p className="text-xs font-mono text-cyan-300/70 mt-4">
-                  Official Infrastructure Partner • High-Performance Computing, IT Solutions & Hardware Support.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* ========================================================================= */}
-          {/* CHAPTER 7: EVENT COORDINATORS & HELPDESK (86% - 94%)                      */}
-          {/* ========================================================================= */}
-          <div
-            className="absolute inset-0 flex flex-col items-center justify-center p-4 transition-all duration-500"
-            style={getChapterStyle(0.86, 0.94)}
-          >
-            <div className="max-w-3xl w-full text-center mb-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-400/40 text-emerald-300 text-xs font-mono tracking-widest uppercase mb-3">
-                <Phone className="w-3.5 h-3.5 text-[#00f5a0]" />
-                Chapter 07 // Student Coordinators
-              </div>
-              <h2 className="text-3xl sm:text-5xl font-black text-white font-mono">
-                GET IN TOUCH
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-3xl mb-4">
-              {/* Coordinator 1 */}
-              <div className="p-6 sm:p-8 rounded-3xl bg-black/85 border border-emerald-500/40 backdrop-blur-xl">
-                <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest">Student Coordinator</span>
-                <h3 className="text-2xl font-black text-white font-mono mt-1">Khalid Adeel</h3>
-                <p className="text-lg font-mono font-bold text-[#00f5a0] mt-1">+91 8590090507</p>
-
-                <div className="grid grid-cols-2 gap-2 mt-4">
-                  <a
-                    href="tel:+918590090507"
-                    className="py-2 px-3 rounded-xl bg-emerald-950/80 border border-emerald-500/40 text-xs font-mono text-center text-emerald-300 hover:text-white transition-colors"
-                  >
-                    📞 Call
-                  </a>
-                  <a
-                    href="https://wa.me/918590090507?text=Hi%20Khalid,%20I%20have%20an%20inquiry%20regarding%20Byteon%20Zypherix."
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="py-2 px-3 rounded-xl bg-[#00f5a0]/15 border border-[#00f5a0]/50 text-xs font-mono text-center text-[#00f5a0] hover:bg-[#00f5a0]/30 transition-colors"
-                  >
-                    💬 WhatsApp
-                  </a>
-                </div>
-              </div>
-
-              {/* Coordinator 2 */}
-              <div className="p-6 sm:p-8 rounded-3xl bg-black/85 border border-emerald-500/40 backdrop-blur-xl">
-                <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest">Student Coordinator</span>
-                <h3 className="text-2xl font-black text-white font-mono mt-1">Nihma Parveen</h3>
-                <p className="text-lg font-mono font-bold text-[#00f5a0] mt-1">+91 8137831382</p>
-
-                <div className="grid grid-cols-2 gap-2 mt-4">
-                  <a
-                    href="tel:+918137831382"
-                    className="py-2 px-3 rounded-xl bg-emerald-950/80 border border-emerald-500/40 text-xs font-mono text-center text-emerald-300 hover:text-white transition-colors"
-                  >
-                    📞 Call
-                  </a>
-                  <a
-                    href="https://wa.me/918137831382?text=Hi%20Nihma,%20I%20have%20an%20inquiry%20regarding%20Byteon%20Zypherix."
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="py-2 px-3 rounded-xl bg-[#00f5a0]/15 border border-[#00f5a0]/50 text-xs font-mono text-center text-[#00f5a0] hover:bg-[#00f5a0]/30 transition-colors"
-                  >
-                    💬 WhatsApp
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            <div className="px-5 py-2 rounded-xl bg-black/70 border border-emerald-500/30 text-xs font-mono text-emerald-300 flex items-center gap-2">
-              <Mail className="w-3.5 h-3.5 text-[#00f5a0]" />
-              <span>Official Mail: <strong className="text-white">zypherix2026@gmail.com</strong></span>
-            </div>
-          </div>
-
-          {/* ========================================================================= */}
-          {/* CHAPTER 8: REGISTRATION & OFFICIAL QR CODE (94% - 100%)                   */}
-          {/* ========================================================================= */}
-          <div
-            className="absolute inset-0 flex flex-col items-center justify-center p-4 transition-all duration-500"
-            style={getChapterStyle(0.94, 1.00)}
-          >
-            <div className="p-6 sm:p-10 rounded-3xl bg-black/90 border-2 border-emerald-500/50 backdrop-blur-2xl shadow-[0_0_60px_rgba(0,245,160,0.3)] max-w-3xl w-full flex flex-col md:flex-row items-center gap-8">
-              
-              {/* QR Code from poster */}
-              <div className="flex flex-col items-center p-4 bg-white rounded-2xl shadow-[0_0_30px_rgba(0,245,160,0.4)] flex-shrink-0">
-                <img
-                  src="/qr-code.png"
-                  alt="Registration QR Code from Poster"
-                  className="w-36 h-36 sm:w-44 sm:h-44 object-contain"
-                />
-                <span className="mt-2 text-[10px] font-mono font-black text-black uppercase tracking-wider">
-                  SCAN WITH ANY UPI / CAMERA
-                </span>
-              </div>
-
-              {/* Text & CTAs */}
-              <div className="text-center md:text-left space-y-3">
-                <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-400/40 text-[#00f5a0] font-mono text-xs">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  Final Chapter // Lock Your Slot
-                </div>
-                <h3 className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight">
-                  REGISTER FOR BYTEON
-                </h3>
-                <p className="text-xs sm:text-sm font-mono text-emerald-300/80">
-                  Ready to compete for ₹9,000/- and take home the national trophy? Register using the camera scanner or click below.
-                </p>
-
-                <div className="pt-2 flex flex-wrap gap-3 justify-center md:justify-start">
-                  <button
-                    onClick={onRegisterClick}
-                    className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#00f5a0] to-[#00d9f5] text-black font-extrabold font-mono text-xs tracking-wider shadow-[0_0_25px_rgba(0,245,160,0.5)] hover:shadow-[0_0_35px_rgba(0,245,160,0.8)] transition-all transform hover:-translate-y-0.5 flex items-center gap-2"
-                  >
-                    <QrCode className="w-4 h-4" />
-                    <span>OPEN REGISTRATION FORM</span>
-                  </button>
-
-                  <button
-                    onClick={onPosterClick}
-                    className="px-5 py-3 rounded-xl bg-black/60 hover:bg-black border border-emerald-500/30 text-emerald-300 font-mono text-xs transition-all flex items-center gap-1.5"
-                  >
-                    <ImageIcon className="w-4 h-4 text-[#00f5a0]" />
-                    <span>VIEW POSTER</span>
-                  </button>
-                </div>
-
-                <p className="text-[10px] font-mono text-emerald-500/60 pt-1">
-                  Jamia Hamdard Kannur Campus • 27 January 2026
-                </p>
-              </div>
-
-            </div>
-          </div>
-
+          <h3 className="mini-heading mt-3 flex items-center gap-2">
+            <Terminal className="w-5 h-5 text-[#E8A85C]" /> The Algorithmic
+            Arena
+          </h3>
+          <p className="mini-text">
+            Solve algorithmic challenges with optimal time and space
+            complexity. Automated test-case evaluation, live ranking.
+          </p>
         </div>
-
       </div>
+      <div className="fact-pill mt-5">
+        LANGUAGES: <strong className="text-white">C • C++ • Python • Java • JavaScript</strong>
+      </div>
+    </>,
+
+    /* 4 — PRIZES */
+    <>
+      <div className="chip">
+        <Trophy className="w-4 h-4 text-[#FFBA00]" />
+        Chapter 04 // Prizes
+      </div>
+      <h2 className="chapter-title">
+        TOTAL POOL <span className="accent-text">₹9,000/-</span>
+      </h2>
+      <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-4xl text-left">
+        <div className="prize-card prize-card--first">
+          <span className="prize-badge">CHAMPION</span>
+          <span className="mini-label">First Prize</span>
+          <div className="prize-amount">
+            ₹6,000<span className="text-2xl text-[#FFBA00]">/-</span>
+          </div>
+          <ul className="prize-list">
+            <li><CheckCircle2 className="w-4 h-4 text-[#FFBA00]" /> ₹6,000 cash prize</li>
+            <li><CheckCircle2 className="w-4 h-4 text-[#FFBA00]" /> Winner trophy &amp; shield</li>
+            <li><CheckCircle2 className="w-4 h-4 text-[#FFBA00]" /> Certificate of excellence</li>
+          </ul>
+        </div>
+        <div className="prize-card prize-card--second">
+          <span className="prize-badge prize-badge--amber">RUNNER-UP</span>
+          <span className="mini-label">Second Prize</span>
+          <div className="prize-amount">
+            ₹3,000<span className="text-2xl text-[#E8A85C]">/-</span>
+          </div>
+          <ul className="prize-list">
+            <li><CheckCircle2 className="w-4 h-4 text-[#E8A85C]" /> ₹3,000 cash prize</li>
+            <li><CheckCircle2 className="w-4 h-4 text-[#E8A85C]" /> Runner-up trophy</li>
+            <li><CheckCircle2 className="w-4 h-4 text-[#E8A85C]" /> Certificate of merit</li>
+          </ul>
+        </div>
+      </div>
+    </>,
+
+    /* 5 — SCHEDULE (UNVERIFIED — not on the poster) */
+    <>
+      <div className="chip">
+        <Calendar className="w-4 h-4 text-[#FFBA00]" />
+        Chapter 05 // Day Schedule — 27 Jan
+      </div>
+      <h2 className="chapter-title">TIMELINE OF THE ARENA</h2>
+      <p className="verify-note">
+        Timings below are from the previous draft, not the poster — confirm
+        with the organisers before publishing.
+      </p>
+      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-4xl text-left">
+        {[
+          { time: "09:00 AM", title: "Reporting & Check-in", desc: "Badge collection at the Jamia Hamdard desk." },
+          { time: "10:00 AM", title: "Inaugural & Rules Brief", desc: "Coordinators present the guidelines." },
+          { time: "10:30 AM", title: "Round 1: Rapid Debug", desc: "45-minute bug hunt & output prediction." },
+          { time: "01:00 PM", title: "Lunch & Networking", desc: "Lunch and sponsor booths." },
+          { time: "02:00 PM", title: "Round 2: Algorithmic Duel", desc: "Qualifiers compete on live problem sets." },
+          { time: "04:30 PM", title: "Grand Valedictory", desc: "₹6,000 & ₹3,000 prizes presented." },
+        ].map((ev) => (
+          <div key={ev.time} className="mini-card">
+            <span className="font-mono text-sm font-bold text-[#FFBA00]">{ev.time}</span>
+            <h4 className="font-mono text-base font-bold text-white mt-1">{ev.title}</h4>
+            <p className="mini-text">{ev.desc}</p>
+          </div>
+        ))}
+      </div>
+    </>,
+
+    /* 6 — SPONSORS */
+    <>
+      <div className="chip">
+        <Cpu className="w-4 h-4 text-[#FFBA00]" />
+        Chapter 06 // Corporate Backing
+      </div>
+      <h2 className="chapter-title">OFFICIAL SPONSORS</h2>
+      <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-3xl text-center">
+        <div className="sponsor-card">
+          <span className="text-3xl font-black text-white font-mono tracking-tight">upcode.</span>
+          <span className="mini-label mt-1">SOFTWARE LABS</span>
+          <p className="mini-text mt-3">Official Technical Partner</p>
+        </div>
+        <div className="sponsor-card">
+          <span className="text-3xl font-black text-white font-mono tracking-wider">INFOMAC</span>
+          <span className="mini-label mt-1">SYSTEMS</span>
+          <p className="mini-text mt-3">Official Infrastructure Partner</p>
+        </div>
+      </div>
+    </>,
+
+    /* 7 — COORDINATORS */
+    <>
+      <div className="chip">
+        <Phone className="w-4 h-4 text-[#FFBA00]" />
+        Chapter 07 // Student Coordinators
+      </div>
+      <h2 className="chapter-title">GET IN TOUCH</h2>
+      <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-3xl text-left">
+        {[
+          { name: "Khalid Adeel", phone: "+91 8590090507", tel: "+918590090507", wa: "918590090507" },
+          { name: "Nihma Parveen", phone: "+91 8137831382", tel: "+918137831382", wa: "918137831382" },
+        ].map((c) => (
+          <div key={c.phone} className="mini-card">
+            <span className="mini-label">Student Coordinator</span>
+            <h3 className="text-2xl font-black text-white font-mono mt-1">{c.name}</h3>
+            <p className="text-xl font-mono font-bold text-[#FFBA00] mt-1">{c.phone}</p>
+            <div className="grid grid-cols-2 gap-2 mt-4">
+              <a href={`tel:${c.tel}`} className="contact-btn">Call</a>
+              <a
+                href={`https://wa.me/${c.wa}?text=Hi%2C%20I%20have%20a%20question%20about%20Byteon%20at%20Zypherix.`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="contact-btn contact-btn--wa"
+              >
+                WhatsApp
+              </a>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="fact-pill mt-5">
+        <Mail className="w-4 h-4 text-[#FFBA00]" />
+        Official mail: <strong className="text-white">zypherix2026@gmail.com</strong>
+      </div>
+    </>,
+
+    /* 8 — REGISTER */
+    <>
+      <div className="register-panel">
+        <div className="qr-box">
+          {/* Keep the QR at near-native size (source is 150px) — upscaling it blurs the code. */}
+          <img src="/qr-code.png" alt="Registration QR code" width={150} height={150} />
+          <span className="mt-2 text-[11px] font-mono font-bold text-black uppercase tracking-wider">
+            Scan to register
+          </span>
+        </div>
+        <div className="text-center md:text-left">
+          <div className="chip">
+            <Sparkles className="w-4 h-4 text-[#FFBA00]" />
+            Final Chapter // Lock Your Slot
+          </div>
+          <h3 className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight mt-3">
+            REGISTER FOR BYTEON
+          </h3>
+          <p className="body-text mt-3">
+            Compete for ₹9,000/- on 27 January 2026 at Jamia Hamdard Kannur
+            Campus. Scan the code or open the form below.
+          </p>
+          <div className="pt-4 flex flex-wrap gap-3 justify-center md:justify-start">
+            <button onClick={onRegisterClick} className="cta-primary">
+              <QrCode className="w-4 h-4" /> OPEN REGISTRATION FORM
+            </button>
+            <button onClick={onPosterClick} className="cta-secondary">
+              <ImageIcon className="w-4 h-4 text-[#FFBA00]" /> VIEW POSTER
+            </button>
+          </div>
+          <p className="text-xs font-mono text-white/70 pt-3">
+            Zypherix 2026 • 27–28 January • Jamia Hamdard Kannur Campus
+          </p>
+        </div>
+      </div>
+    </>,
+  ];
+
+  /* ------------------------------------------------------------------ */
+  /* Reduced-motion fallback: the same content, stacked, no scrub.       */
+  /* ------------------------------------------------------------------ */
+  if (isReducedMotion) {
+    return (
+      <div className="relative w-full bg-[#050811] text-white">
+        <div className="mx-auto max-w-4xl px-4 py-10 space-y-6">
+          <img src="/poster.jpg" alt="Byteon — Zypherix 2026 poster" className="w-full rounded-2xl border border-white/20" />
+          {chapterBody.map((body, i) => (
+            <section key={CHAPTERS[i].id} className="chapter-panel chapter-panel--static">
+              {body}
+            </section>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div ref={trackRef} className="relative w-full h-[800vh] bg-[#050811]">
+      {/*
+        FIXED VIDEO BACKGROUND — one <video>, scrubbed by scroll.
+        brightness(0.55) is the predictable dim the old overlays never gave.
+        No scanlines, no gradient stacks on top of the picture.
+      */}
+      <div className="fixed inset-0 z-0 overflow-hidden bg-[#050811]" aria-hidden="true">
+        {!videoMissing ? (
+          <video
+            ref={videoRef}
+            className="video-bg"
+            src="/byteon.mp4"
+            poster="/poster.jpg"
+            muted
+            playsInline
+            preload="auto"
+            onLoadedMetadata={(e) => {
+              durationRef.current = e.currentTarget.duration || 0;
+              setVideoReady(true);
+            }}
+            onError={() => setVideoMissing(true)}
+          />
+        ) : (
+          <img src="/poster.jpg" alt="" className="video-bg" />
+        )}
+        {/* One real scrim (see globals.css). Uniform, no bright centre. */}
+        <div className="video-scrim" />
+      </div>
+
+      {/* Header — solid, not translucent-blur dependent */}
+      <header className="fixed top-0 left-0 right-0 z-30 px-4 sm:px-8 py-4 flex items-center justify-between bg-[#04070d]/95 border-b border-white/10">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-[#FFBA00]/15 border border-[#FFBA00]/40 flex items-center justify-center text-[#FFBA00]">
+            <Terminal className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="font-mono font-black text-white text-base tracking-wider">
+              BYTEON <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#FFBA00]/15 text-[#FFBA00] border border-white/15 font-bold">2026</span>
+            </span>
+            <p className="text-[11px] font-mono uppercase tracking-widest text-white/70 -mt-0.5">
+              Zypherix National IT Fest • 27, 28 Jan
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onPosterClick}
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0b1120] border border-white/20 text-white text-xs font-mono"
+          >
+            <ImageIcon className="w-3.5 h-3.5 text-[#FFBA00]" /> Event Poster
+          </button>
+          <button onClick={onRegisterClick} className="cta-primary !px-4 !py-2">
+            <QrCode className="w-3.5 h-3.5" /> REGISTER NOW
+          </button>
+        </div>
+      </header>
+
+      {/* Chapter dots */}
+      <nav
+        aria-label="Chapter timeline"
+        className="fixed right-3 sm:right-6 top-1/2 -translate-y-1/2 z-30 hidden md:flex flex-col gap-3 p-2.5 rounded-2xl bg-black/85 border border-white/20"
+      >
+        {CHAPTERS.map((ch, idx) => (
+          <button
+            key={ch.id}
+            onClick={() => jumpToChapter(idx)}
+            title={ch.title}
+            aria-label={ch.title}
+            className="group relative flex items-center justify-end"
+          >
+            <span className="absolute right-7 px-2.5 py-1 rounded-md bg-black border border-white/20 text-[11px] font-mono whitespace-nowrap text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+              {ch.title}
+            </span>
+            <span
+              className={`rounded-full transition-all duration-200 ${
+                activeChapter === idx
+                  ? "w-4 h-4 bg-[#FFBA00] shadow-[0_0_12px_#FFBA00]"
+                  : "w-2.5 h-2.5 bg-[#0b1120] border border-[#FFBA00]/50 group-hover:bg-[#FFBA00]/60"
+              }`}
+            />
+          </button>
+        ))}
+      </nav>
+
+      {/* Bottom status bar — solid, with a real progress bar */}
+      <footer className="fixed bottom-0 left-0 right-0 z-30 bg-[#04070d]/95 border-t border-white/10">
+        <div className="h-1 w-full bg-white/10">
+          <div
+            ref={progressBarRef}
+            className="h-full"
+            style={{ width: "0%", background: "linear-gradient(90deg, #B46617, #FFBA00)" }}
+          />
+        </div>
+        <div className="px-4 sm:px-8 py-2.5 flex items-center justify-between text-xs font-mono text-white/80">
+          <span className="flex items-center gap-2">
+            {/* Emerald survives here only: the system/live mark. */}
+            <span className="w-2 h-2 rounded-full bg-[#00F5A0] animate-pulse" />
+            <span className="text-white/50">CURRENT CHAPTER: </span>
+            <strong className="text-white">{CHAPTERS[activeChapter]?.title}</strong>
+          </span>
+          <span className="hidden sm:inline">
+            {activeChapter + 1} / {CHAPTER_COUNT} — scroll for the next detail
+          </span>
+        </div>
+      </footer>
+
+      {/* Sticky viewport: exactly ONE chapter visible at a time */}
+      <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center z-10">
+        <div className="relative w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-center">
+          {chapterBody.map((body, i) => (
+            <div
+              key={CHAPTERS[i].id}
+              ref={(el) => {
+                chapterRefs.current[i] = el;
+              }}
+              /* No transition class here — opacity is driven per-frame by rAF. */
+              className="absolute inset-0 flex flex-col items-center justify-center text-center p-4"
+              style={{ opacity: i === 0 ? 1 : 0, visibility: i === 0 ? "visible" : "hidden" }}
+            >
+              <div className="chapter-panel">{body}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Loading state: only until the video can play, not 238 images */}
+      {!videoReady && !videoMissing && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#050811] p-6">
+          <div className="text-4xl sm:text-6xl font-black tracking-tighter text-white font-mono">
+            BYTEON<span className="text-[#FFBA00]">.2026</span>
+          </div>
+          <p className="mt-3 text-sm font-mono text-white/70">
+            Loading the Byteon film…
+          </p>
+        </div>
+      )}
     </div>
   );
 }
