@@ -34,24 +34,24 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
-      <div className="relative w-full max-w-2xl bg-[#080d1a] border border-emerald-500/40 rounded-2xl p-6 sm:p-8 shadow-[0_0_50px_rgba(0,245,160,0.25)] text-white">
+    <div className="fixed inset-0 z-50 flex justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md overflow-y-auto">
+      <div className="relative w-full max-w-2xl my-auto bg-[#080d1a] border border-[#FFBA00]/40 rounded-2xl p-6 sm:p-8 shadow-[0_0_50px_rgba(255,186,0,0.25)] text-white">
         
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 p-2 rounded-lg bg-black/50 text-emerald-400 hover:text-white hover:bg-emerald-950/60 border border-emerald-500/20 transition-all"
+          className="absolute top-5 right-5 p-2 rounded-lg bg-black/50 text-[#FFBA00] hover:text-white hover:bg-[#FFBA00]/10 border border-white/15 transition-all"
         >
           <X className="w-5 h-5" />
         </button>
 
         {submitted ? (
           <div className="text-center py-10 space-y-4">
-            <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto border border-[#00f5a0]/50 shadow-[0_0_25px_#00f5a0]">
-              <CheckCircle2 className="w-8 h-8 text-[#00f5a0]" />
+            <div className="w-16 h-16 bg-[#FFBA00]/15 rounded-full flex items-center justify-center mx-auto border border-[#FFBA00]/50 shadow-[0_0_25px_#FFBA00]">
+              <CheckCircle2 className="w-8 h-8 text-[#FFBA00]" />
             </div>
             <h3 className="text-2xl font-bold font-mono">REGISTRATION SUBMITTED!</h3>
-            <p className="text-sm font-mono text-emerald-300/80 max-w-md mx-auto">
+            <p className="text-sm font-mono text-[#F2EFE6]/80 max-w-md mx-auto">
               Your details have been received. Please scan the QR code to complete the verification or contact the coordinators on WhatsApp.
             </p>
             <div className="pt-4 flex justify-center gap-3">
@@ -60,7 +60,7 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
                   setSubmitted(false);
                   onClose();
                 }}
-                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#00f5a0] to-[#00d9f5] text-black font-bold font-mono text-xs"
+                className="px-6 py-2.5 rounded-xl bg-[#FFBA00] text-black font-bold font-mono text-xs"
               >
                 CLOSE WINDOW
               </button>
@@ -69,53 +69,53 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
         ) : (
           <div>
             <div className="mb-6">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-400/30 text-emerald-300 text-xs font-mono mb-2">
-                <Sparkles className="w-3.5 h-3.5 text-[#00f5a0]" />
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFBA00]/10 border border-[#FFBA00]/40 text-[#FFBA00] text-xs font-mono mb-2">
+                <Sparkles className="w-3.5 h-3.5 text-[#FFBA00]" />
                 ZYPHERIX 2026 // CODING EVENT
               </div>
               <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight font-mono text-white">
                 REGISTER FOR BYTEON
               </h2>
-              <p className="text-xs sm:text-sm font-mono text-emerald-300/70 mt-1">
+              <p className="text-xs sm:text-sm font-mono text-[#A8BFAF] mt-1">
                 27 January 2026 • Jamia Hamdard Kannur Campus
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-5 gap-6 items-center">
               {/* QR Code Section from Poster */}
-              <div className="md:col-span-2 flex flex-col items-center bg-black/60 p-4 rounded-xl border border-emerald-500/20 text-center">
-                <div className="relative p-2 bg-white rounded-lg shadow-[0_0_20px_rgba(0,245,160,0.3)] mb-3">
+              <div className="md:col-span-2 flex flex-col items-center bg-black/60 p-4 rounded-xl border border-white/15 text-center">
+                <div className="relative p-2 bg-white rounded-lg shadow-[0_0_20px_rgba(255,186,0,0.3)] mb-3">
                   <img
                     src="/qr-code.png"
                     alt="Registration QR Code from Poster"
                     className="w-36 h-36 object-contain"
                   />
                 </div>
-                <span className="text-xs font-mono font-bold text-[#00f5a0] flex items-center gap-1">
+                <span className="text-xs font-mono font-bold text-[#FFBA00] flex items-center gap-1">
                   <QrCode className="w-3.5 h-3.5" />
                   OFFICIAL SCANNER
                 </span>
-                <p className="text-[11px] font-mono text-emerald-300/60 mt-1">
+                <p className="text-[11px] font-mono text-[#A8BFAF] mt-1">
                   Scan with your phone camera or GPay / UPI scanner to register directly.
                 </p>
 
-                <div className="mt-4 pt-3 border-t border-emerald-500/20 w-full flex flex-col gap-1.5 text-[11px] font-mono text-left">
-                  <span className="text-emerald-400/80">Support Mail:</span>
+                <div className="mt-4 pt-3 border-t border-white/15 w-full flex flex-col gap-1.5 text-[11px] font-mono text-left">
+                  <span className="text-[#FFBA00]/80">Support Mail:</span>
                   <button
                     onClick={handleCopyEmail}
-                    className="flex items-center justify-between text-emerald-200 hover:text-white bg-emerald-950/40 px-2 py-1 rounded border border-emerald-500/20"
+                    className="flex items-center justify-between text-[#F2EFE6] hover:text-white bg-white/5 px-2 py-1 rounded border border-white/15"
                   >
                     <span className="truncate">zypherix2026@gmail.com</span>
-                    <Copy className="w-3 h-3 text-[#00f5a0]" />
+                    <Copy className="w-3 h-3 text-[#FFBA00]" />
                   </button>
-                  {copiedEmail && <span className="text-[10px] text-[#00f5a0]">Copied to clipboard!</span>}
+                  {copiedEmail && <span className="text-[10px] text-[#FFBA00]">Copied to clipboard!</span>}
                 </div>
               </div>
 
               {/* Form Section */}
               <form onSubmit={handleSubmit} className="md:col-span-3 space-y-3.5">
                 <div>
-                  <label className="block text-xs font-mono text-emerald-300/90 mb-1">
+                  <label className="block text-xs font-mono text-[#A8BFAF] mb-1">
                     Full Name *
                   </label>
                   <input
@@ -124,13 +124,13 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
                     placeholder="Ada Lovelace"
                     value={formData.fullName}
                     onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-black/50 border border-emerald-500/30 text-white font-mono text-xs focus:outline-none focus:border-[#00f5a0] focus:ring-1 focus:ring-[#00f5a0]"
+                    className="w-full px-3 py-2 rounded-lg bg-black/50 border border-[#FFBA00]/40 text-white font-mono text-xs focus:outline-none focus:border-[#FFBA00] focus:ring-1 focus:ring-[#FFBA00]"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-mono text-emerald-300/90 mb-1">
+                    <label className="block text-xs font-mono text-[#A8BFAF] mb-1">
                       Email Address *
                     </label>
                     <input
@@ -139,12 +139,12 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
                       placeholder="coder@example.com"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-3 py-2 rounded-lg bg-black/50 border border-emerald-500/30 text-white font-mono text-xs focus:outline-none focus:border-[#00f5a0] focus:ring-1 focus:ring-[#00f5a0]"
+                      className="w-full px-3 py-2 rounded-lg bg-black/50 border border-[#FFBA00]/40 text-white font-mono text-xs focus:outline-none focus:border-[#FFBA00] focus:ring-1 focus:ring-[#FFBA00]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-mono text-emerald-300/90 mb-1">
+                    <label className="block text-xs font-mono text-[#A8BFAF] mb-1">
                       WhatsApp Phone *
                     </label>
                     <input
@@ -153,13 +153,13 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
                       placeholder="+91 9876543210"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="w-full px-3 py-2 rounded-lg bg-black/50 border border-emerald-500/30 text-white font-mono text-xs focus:outline-none focus:border-[#00f5a0] focus:ring-1 focus:ring-[#00f5a0]"
+                      className="w-full px-3 py-2 rounded-lg bg-black/50 border border-[#FFBA00]/40 text-white font-mono text-xs focus:outline-none focus:border-[#FFBA00] focus:ring-1 focus:ring-[#FFBA00]"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono text-emerald-300/90 mb-1">
+                  <label className="block text-xs font-mono text-[#A8BFAF] mb-1">
                     College / Institution *
                   </label>
                   <input
@@ -168,19 +168,19 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
                     placeholder="Jamia Hamdard / College Name"
                     value={formData.college}
                     onChange={(e) => setFormData({ ...formData, college: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-black/50 border border-emerald-500/30 text-white font-mono text-xs focus:outline-none focus:border-[#00f5a0] focus:ring-1 focus:ring-[#00f5a0]"
+                    className="w-full px-3 py-2 rounded-lg bg-black/50 border border-[#FFBA00]/40 text-white font-mono text-xs focus:outline-none focus:border-[#FFBA00] focus:ring-1 focus:ring-[#FFBA00]"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-mono text-emerald-300/90 mb-1">
+                    <label className="block text-xs font-mono text-[#A8BFAF] mb-1">
                       Academic Year
                     </label>
                     <select
                       value={formData.year}
                       onChange={(e) => setFormData({ ...formData, year: e.target.value })}
-                      className="w-full px-3 py-2 rounded-lg bg-black/50 border border-emerald-500/30 text-white font-mono text-xs focus:outline-none focus:border-[#00f5a0]"
+                      className="w-full px-3 py-2 rounded-lg bg-black/50 border border-[#FFBA00]/40 text-white font-mono text-xs focus:outline-none focus:border-[#FFBA00]"
                     >
                       <option value="1st Year">1st Year</option>
                       <option value="2nd Year">2nd Year</option>
@@ -191,13 +191,13 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
                   </div>
 
                   <div>
-                    <label className="block text-xs font-mono text-emerald-300/90 mb-1">
+                    <label className="block text-xs font-mono text-[#A8BFAF] mb-1">
                       Preferred Language
                     </label>
                     <select
                       value={formData.language}
                       onChange={(e) => setFormData({ ...formData, language: e.target.value })}
-                      className="w-full px-3 py-2 rounded-lg bg-black/50 border border-emerald-500/30 text-white font-mono text-xs focus:outline-none focus:border-[#00f5a0]"
+                      className="w-full px-3 py-2 rounded-lg bg-black/50 border border-[#FFBA00]/40 text-white font-mono text-xs focus:outline-none focus:border-[#FFBA00]"
                     >
                       <option value="Python">Python</option>
                       <option value="C++">C++</option>
@@ -211,7 +211,7 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
                 <div className="pt-2">
                   <button
                     type="submit"
-                    className="w-full py-3 rounded-xl bg-gradient-to-r from-[#00f5a0] to-[#00d9f5] text-black font-extrabold font-mono text-xs tracking-wider hover:shadow-[0_0_25px_rgba(0,245,160,0.5)] transition-all flex items-center justify-center gap-2"
+                    className="w-full py-3 rounded-xl bg-[#FFBA00] text-black font-extrabold font-mono text-xs tracking-wider hover:shadow-[0_0_25px_rgba(255,186,0,0.5)] transition-all flex items-center justify-center gap-2"
                   >
                     <Send className="w-3.5 h-3.5" />
                     <span>CONFIRM REGISTRATION</span>
@@ -220,9 +220,9 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
               </form>
             </div>
 
-            <div className="mt-4 pt-3 border-t border-emerald-500/20 flex items-center justify-between text-[11px] font-mono text-emerald-400/60">
+            <div className="mt-4 pt-3 border-t border-white/15 flex items-center justify-between text-[11px] font-mono text-[#FFBA00]/60">
               <span className="flex items-center gap-1">
-                <AlertCircle className="w-3.5 h-3.5 text-[#00f5a0]" />
+                <AlertCircle className="w-3.5 h-3.5 text-[#FFBA00]" />
                 Spot registration subject to seat limits.
               </span>
               <span>Event Date: 27 Jan 2026</span>

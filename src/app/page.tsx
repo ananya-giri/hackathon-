@@ -10,11 +10,13 @@ export default function Home() {
   const [isPosterOpen, setIsPosterOpen] = useState(false);
 
   return (
-    <main className="relative min-h-screen bg-[#050811] text-emerald-100 overflow-x-hidden">
-      {/* 
-        Full-Screen Apple / EDL-style scroll-linked canvas experience.
-        The video sequence remains fixed across the entire website screen,
-        revealing details and interactive sections across 8 scroll chapters.
+    <main className="relative min-h-screen bg-[#050811] text-[#F2EFE6]">
+      {/*
+        Full-screen scroll-linked video experience: the film stays fixed
+        across the whole page, revealing one chapter at a time as you scroll.
+        NOTE: do not put overflow-x-hidden (or any overflow) on this <main> —
+        it makes <main> the scroll container for sticky descendants and the
+        chapter viewport (now fixed) must stay viewport-anchored.
       */}
       <ScrollCanvasAnimation
         onRegisterClick={() => setIsRegisterOpen(true)}

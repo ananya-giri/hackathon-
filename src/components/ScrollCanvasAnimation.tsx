@@ -38,6 +38,14 @@
  * languages, certificates) are NOT on the event poster. They were carried
  * over from the old code. Confirm them with the organisers before
  * presenting this page as final.
+ *
+ * v2.1 (2026-11-22): the chapter viewport was `sticky top-0`, but
+ * `overflow-x-hidden` on <main> (page.tsx) made <main> its scroll
+ * container, so it never stuck and scrolled away with the page —
+ * chapters 2-8 faded in/out off-screen on the live site. The viewport
+ * is now `fixed` (immune to that) and the overflow guard is gone from
+ * <main>. Hero no longer fades in from nothing at the top; the last
+ * chapter stays put at the bottom instead of fading out.
  */
 
 import React, { useEffect, useRef, useState } from "react";
@@ -206,8 +214,10 @@ export default function ScrollCanvasAnimation({
           const local = (p - start) / (end - start); // 0..1 inside this chapter
           let opacity = 0;
           if (local >= 0 && local <= 1) {
-            if (local < 0.18) opacity = local / 0.18;
-            else if (local > 0.82) opacity = (1 - local) / 0.18;
+            // First chapter: visible on landing (no fade-in from nothing).
+            // Last chapter: stays visible at the bottom (no fade-out).
+            if (local < 0.18) opacity = i === 0 ? 1 : local / 0.18;
+            else if (local > 0.82) opacity = i === CHAPTER_COUNT - 1 ? 1 : (1 - local) / 0.18;
             else opacity = 1;
           }
           el.style.opacity = opacity.toFixed(3);
@@ -634,8 +644,16 @@ export default function ScrollCanvasAnimation({
         </div>
       </footer>
 
-      {/* Sticky viewport: exactly ONE chapter visible at a time */}
-      <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center z-10">
+      {/*
+        FIXED viewport: exactly ONE chapter visible at a time.
+        (Was `sticky top-0` — but `overflow-x-hidden` on <main> made <main>
+        the scroll container, so the sticky viewport never stuck and the
+        whole chapter layer scrolled away with the page. Fixed positioning
+        is immune to that. pointer-events-none here; each chapter re-enables
+        its own pointer events when visible, so invisible chapters never
+        block clicks.)
+      */}
+      <div className="fixed inset-0 z-10 flex items-center justify-center pointer-events-none">
         <div className="relative w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-center">
           {chapterBody.map((body, i) => (
             <div

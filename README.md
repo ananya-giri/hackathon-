@@ -28,6 +28,12 @@ Build for production with `pnpm build` / `npm run build`.
   chapter fades in over its first 18%, holds, and fades out over its
   last 18%, with opacity written straight to the DOM (no React
   re-render per scroll frame, no CSS transition fighting the scroll).
+  The chapter layer is `position: fixed` (not `sticky`): a `sticky`
+  viewport never stuck on the live site because `overflow-x-hidden`
+  on `<main>` made `<main>` its scroll container, so chapters 2–8
+  faded in and out off-screen. Hero is visible on landing and the
+  last chapter stays visible at the bottom (no fade-in/out at the
+  ends).
 - Chapter dots jump to a chapter; the footer shows the current chapter
   and a bronze → amber progress bar. Reduced-motion visitors get a
   clean stacked page with the poster instead of the scrub.
