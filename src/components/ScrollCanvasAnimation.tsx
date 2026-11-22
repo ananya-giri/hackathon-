@@ -111,6 +111,39 @@ export default function ScrollCanvasAnimation({
     );
   }, []);
 
+  /* Check video readiness on mount + event listeners + timeout fallback */
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const handleReady = () => {
+      if (video.duration && Number.isFinite(video.duration) && video.duration > 0) {
+        durationRef.current = video.duration;
+      }
+      setVideoReady(true);
+    };
+
+    if (video.readyState >= 1) {
+      handleReady();
+    }
+
+    video.addEventListener("loadedmetadata", handleReady);
+    video.addEventListener("loadeddata", handleReady);
+    video.addEventListener("canplay", handleReady);
+
+    // Failsafe: never leave the screen stuck on loading
+    const timer = setTimeout(() => {
+      handleReady();
+    }, 1200);
+
+    return () => {
+      video.removeEventListener("loadedmetadata", handleReady);
+      video.removeEventListener("loadeddata", handleReady);
+      video.removeEventListener("canplay", handleReady);
+      clearTimeout(timer);
+    };
+  }, []);
+
   /*
    * THE SCRUB LOOP — one rAF loop does everything, with no React
    * re-render per frame:
@@ -138,11 +171,16 @@ export default function ScrollCanvasAnimation({
         const p = smoothProgressRef.current;
 
         const video = videoRef.current;
-        if (video && durationRef.current > 0 && videoReady) {
-          const t = p * (durationRef.current - 0.05);
+        const dur = durationRef.current || (video && Number.isFinite(video.duration) ? video.duration : 0);
+        if (video && Number.isFinite(dur) && dur > 0) {
+          const t = Math.max(0, Math.min(dur - 0.05, p * dur));
           // Only seek when it actually moved — avoids seek thrash.
-          if (Math.abs(video.currentTime - t) > 0.03) {
-            video.currentTime = t;
+          if (Number.isFinite(t) && Math.abs(video.currentTime - t) > 0.03) {
+            try {
+              video.currentTime = t;
+            } catch {
+              // Ignore seek exceptions during rapid scrubbing
+            }
           }
         }
 
