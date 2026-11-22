@@ -207,18 +207,25 @@ export default function ScrollCanvasAnimation({
           progressBarRef.current.style.width = `${(p * 100).toFixed(1)}%`;
         }
 
-        // One chapter visible at a time: fade in 0–18%, hold, fade out 82–100%.
+        // One chapter visible at a time, CROSSFADING across boundaries:
+        // a chapter fades in over the last 9% of the previous chapter's
+        // slice + the first 9% of its own, and out symmetrically — so the
+        // outgoing panel is still half-visible while the incoming fades in
+        // and there is never a stretch of scroll with no panel on screen.
         chapterRefs.current.forEach((el, i) => {
           if (!el) return;
           const [start, end] = chapterRange(i);
-          const local = (p - start) / (end - start); // 0..1 inside this chapter
+          const slice = end - start;
+          const fade = slice * 0.09; // half of the old 18% window, each side
           let opacity = 0;
-          if (local >= 0 && local <= 1) {
-            // First chapter: visible on landing (no fade-in from nothing).
-            // Last chapter: stays visible at the bottom (no fade-out).
-            if (local < 0.18) opacity = i === 0 ? 1 : local / 0.18;
-            else if (local > 0.82) opacity = i === CHAPTER_COUNT - 1 ? 1 : (1 - local) / 0.18;
-            else opacity = 1;
+          if (p >= start - fade && p <= end + fade) {
+            const inEdge = (p - (start - fade)) / (2 * fade); // 0..1 over the in-fade
+            const outEdge = (end + fade - p) / (2 * fade); // 1..0 over the out-fade
+            opacity = Math.min(inEdge, outEdge, 1);
+            // First chapter: visible on landing; last: stays at the bottom.
+            if (i === 0 && p < start + fade) opacity = 1;
+            if (i === CHAPTER_COUNT - 1 && p > end - fade) opacity = 1;
+            opacity = Math.max(0, Math.min(1, opacity));
           }
           el.style.opacity = opacity.toFixed(3);
           el.style.visibility = opacity <= 0.01 ? "hidden" : "visible";
@@ -238,8 +245,11 @@ export default function ScrollCanvasAnimation({
     const track = trackRef.current;
     if (!track) return;
     const maxScroll = track.offsetHeight - window.innerHeight;
+    // Land MID-chapter (opacity 1), not at its start where the fade-in
+    // is still at 0 — otherwise a dot click shows an empty screen until
+    // the visitor scrolls a little further.
     window.scrollTo({
-      top: track.offsetTop + (index / CHAPTER_COUNT) * maxScroll,
+      top: track.offsetTop + ((index + 0.5) / CHAPTER_COUNT) * maxScroll,
       behavior: "smooth",
     });
   };
