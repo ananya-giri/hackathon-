@@ -53,20 +53,14 @@ import {
   Terminal,
   Cpu,
   ChevronDown,
-  Award,
   Trophy,
-  Calendar,
   MapPin,
-  Bug,
-  Code2,
   Phone,
   Mail,
   QrCode,
   Image as ImageIcon,
   CheckCircle2,
-  Check,
   Sparkles,
-  Clock,
   Ticket,
 } from "lucide-react";
 import CurtainHeader from "./CurtainHeader";
@@ -76,17 +70,15 @@ interface ScrollCanvasAnimationProps {
   onPosterClick: () => void;
 }
 
-const CHAPTER_COUNT = 8;
+const CHAPTER_COUNT = 6;
 
 const CHAPTERS = [
   { id: "hero", title: "01 // Initiation" },
   { id: "about", title: "02 // Fest & Venue" },
-  { id: "rounds", title: "03 // Rounds & Rules" },
-  { id: "prizes", title: "04 // Prizes ₹9,000" },
-  { id: "schedule", title: "05 // Event Timeline" },
-  { id: "sponsors", title: "06 // Official Sponsors" },
-  { id: "coordinators", title: "07 // Helpdesk" },
-  { id: "register", title: "08 // Registration & QR" },
+  { id: "prizes", title: "03 // Prizes ₹9,000" },
+  { id: "sponsors", title: "04 // Official Sponsors" },
+  { id: "coordinators", title: "05 // Helpdesk" },
+  { id: "register", title: "06 // Registration & QR" },
 ];
 
 /* One chapter = one equal slice of the scroll track. */
@@ -329,61 +321,11 @@ export default function ScrollCanvasAnimation({
       </div>
     </>,
 
-    /* 3 — ROUNDS & RULES (UNVERIFIED — not on the poster) */
-    <>
-      <div className="chip">
-        <Code2 className="w-4 h-4 text-[#FFBA00]" />
-        Chapter 03 // Competition Structure
-      </div>
-      <CurtainHeader as="h2" text="TWO ROUNDS" className="chapter-title" />
-      <p className="verify-note text-xs sm:text-sm">
-        Details below are from the previous draft, not the poster — confirm
-        with the organisers before publishing.
-      </p>
-      <div className="mt-4 sm:mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-6 w-full max-w-4xl text-left">
-        <div className="mini-card p-3.5 sm:p-5">
-          <div className="flex items-center justify-between">
-            <span className="round-tag">ROUND 01</span>
-            <span className="flex items-center gap-1 text-xs sm:text-sm font-mono text-white">
-              <Clock className="w-4 h-4 text-[#FFBA00]" /> 45 Minutes
-            </span>
-          </div>
-          <h3 className="mini-heading mt-2.5 sm:mt-3 flex items-center gap-2 text-sm sm:text-base md:text-lg">
-            <Bug className="w-5 h-5 text-[#FFBA00] shrink-0" /> Syntax Hunt &amp;
-            Debugging
-          </h3>
-          <p className="mini-text text-xs sm:text-sm">
-            Find the flaws, fix broken snippets, predict the output — against
-            the clock. Top scorers advance.
-          </p>
-        </div>
-        <div className="mini-card p-3.5 sm:p-5">
-          <div className="flex items-center justify-between">
-            <span className="round-tag round-tag--bronze">ROUND 02</span>
-            <span className="flex items-center gap-1 text-xs sm:text-sm font-mono text-white">
-              <Clock className="w-4 h-4 text-[#E8A85C]" /> 90 Minutes
-            </span>
-          </div>
-          <h3 className="mini-heading mt-2.5 sm:mt-3 flex items-center gap-2 text-sm sm:text-base md:text-lg">
-            <Terminal className="w-5 h-5 text-[#E8A85C] shrink-0" /> The Algorithmic
-            Arena
-          </h3>
-          <p className="mini-text text-xs sm:text-sm">
-            Solve algorithmic challenges with optimal time and space
-            complexity. Automated test-case evaluation, live ranking.
-          </p>
-        </div>
-      </div>
-      <div className="fact-pill mt-4 sm:mt-5 text-xs sm:text-sm flex flex-wrap justify-center">
-        LANGUAGES: <strong className="text-white ml-1">C • C++ • Python • Java • JavaScript</strong>
-      </div>
-    </>,
-
-    /* 4 — PRIZES */
+    /* 3 — PRIZES */
     <>
       <div className="chip">
         <Trophy className="w-4 h-4 text-[#FFBA00]" />
-        Chapter 04 // Prizes
+        Chapter 03 // Prizes
       </div>
       <div className="chapter-title flex flex-wrap items-center justify-center gap-x-[0.35em] gap-y-1">
         <CurtainHeader as="span" text="TOTAL POOL" startIndex={0} />
@@ -417,40 +359,11 @@ export default function ScrollCanvasAnimation({
       </div>
     </>,
 
-    /* 5 — SCHEDULE (UNVERIFIED — not on the poster) */
-    <>
-      <div className="chip">
-        <Calendar className="w-4 h-4 text-[#FFBA00]" />
-        Chapter 05 // Day Schedule — 27 Jan
-      </div>
-      <CurtainHeader as="h2" text="TIMELINE OF THE ARENA" className="chapter-title" />
-      <p className="verify-note text-xs sm:text-sm">
-        Timings below are from the previous draft, not the poster — confirm
-        with the organisers before publishing.
-      </p>
-      <div className="mt-4 sm:mt-6 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3.5 w-full max-w-4xl text-left">
-        {[
-          { time: "09:00 AM", title: "Reporting & Check-in", desc: "Badge collection at the Jamia Hamdard desk." },
-          { time: "10:00 AM", title: "Inaugural & Rules Brief", desc: "Coordinators present the guidelines." },
-          { time: "10:30 AM", title: "Round 1: Rapid Debug", desc: "45-minute bug hunt & output prediction." },
-          { time: "01:00 PM", title: "Lunch & Networking", desc: "Lunch and sponsor booths." },
-          { time: "02:00 PM", title: "Round 2: Algorithmic Duel", desc: "Qualifiers compete on live problem sets." },
-          { time: "04:30 PM", title: "Grand Valedictory", desc: "₹6,000 & ₹3,000 prizes presented." },
-        ].map((ev) => (
-          <div key={ev.time} className="mini-card !p-2.5 sm:!p-4">
-            <span className="font-mono text-xs sm:text-sm font-bold text-[#FFBA00] block">{ev.time}</span>
-            <h4 className="font-mono text-xs sm:text-sm md:text-base font-bold text-white mt-0.5 leading-snug">{ev.title}</h4>
-            <p className="mini-text text-[11px] sm:text-xs md:text-sm mt-1 text-[#F2EFE6]/80 hidden xs:block">{ev.desc}</p>
-          </div>
-        ))}
-      </div>
-    </>,
-
-    /* 6 — SPONSORS */
+    /* 4 — SPONSORS */
     <>
       <div className="chip">
         <Cpu className="w-4 h-4 text-[#FFBA00]" />
-        Chapter 06 // Corporate Backing
+        Chapter 04 // Corporate Backing
       </div>
       <CurtainHeader as="h2" text="OFFICIAL SPONSORS" className="chapter-title" />
       <div className="mt-5 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-6 w-full max-w-3xl text-center">
@@ -467,11 +380,11 @@ export default function ScrollCanvasAnimation({
       </div>
     </>,
 
-    /* 7 — COORDINATORS */
+    /* 5 — COORDINATORS */
     <>
       <div className="chip">
         <Phone className="w-4 h-4 text-[#FFBA00]" />
-        Chapter 07 // Student Coordinators
+        Chapter 05 // Student Coordinators
       </div>
       <CurtainHeader as="h2" text="GET IN TOUCH" className="chapter-title" />
       <div className="mt-5 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-6 w-full max-w-3xl text-left">
@@ -575,7 +488,7 @@ export default function ScrollCanvasAnimation({
   }
 
   return (
-    <div ref={trackRef} className="relative w-full h-[800vh] bg-[#050811]">
+    <div ref={trackRef} className="relative w-full h-[600vh] bg-[#050811]">
       {/*
         FIXED VIDEO BACKGROUND — one <video>, scrubbed by scroll.
         brightness(0.55) is the predictable dim the old overlays never gave.
