@@ -67,7 +67,9 @@ import {
   Check,
   Sparkles,
   Clock,
+  Ticket,
 } from "lucide-react";
+import CurtainHeader from "./CurtainHeader";
 
 interface ScrollCanvasAnimationProps {
   onRegisterClick: () => void;
@@ -266,20 +268,29 @@ export default function ScrollCanvasAnimation({
         <Terminal className="w-4 h-4 text-[#FFBA00]" />
         Zypherix 2026 // National Level IT Fest
       </div>
-      <h1 className="hero-title">BYTEON</h1>
-      <p className="mt-3 text-xl sm:text-3xl font-mono font-bold tracking-wider text-[#FFBA00]">
+      <CurtainHeader
+        as="h1"
+        text="BYTEON"
+        className="hero-title my-1 sm:my-2"
+        curtainClassName="fx-curtain--hero"
+      />
+      <p className="mt-2 sm:mt-3 text-lg sm:text-2xl md:text-3xl font-mono font-bold tracking-wider text-[#FFBA00]">
         CODING CHALLENGE <span className="date-pill">27 JAN</span>
       </p>
-      <p className="body-text mt-4 max-w-lg">
+      <p className="body-text mt-3 sm:mt-4 max-w-lg text-sm sm:text-base">
         One screen, one scroll, one event. Keep scrolling — each detail of
         the contest appears on its own screen.
       </p>
-      <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-sm font-mono">
+      <div className="mt-5 sm:mt-6 flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-xs sm:text-sm font-mono">
         <span className="fact-pill">₹9,000 Total Prize Pool</span>
+        <span className="fact-pill text-[#FFBA00] border-[#FFBA00]/45 font-bold shadow-[0_0_12px_rgba(255,186,0,0.15)]">
+          <Ticket className="w-3.5 h-3.5 text-[#FFBA00]" />
+          Fee: Rs. 499
+        </span>
         <span className="fact-pill">Jamia Hamdard Kannur Campus</span>
         <span className="fact-pill">27–28 January 2026</span>
       </div>
-      <div className="mt-8 flex items-center gap-2 text-sm font-mono text-white animate-bounce">
+      <div className="mt-6 sm:mt-8 flex items-center gap-2 text-xs sm:text-sm font-mono text-white animate-bounce">
         <span>SCROLL TO STEP THROUGH THE EVENT</span>
         <ChevronDown className="w-4 h-4 text-[#FFBA00]" />
       </div>
@@ -291,26 +302,26 @@ export default function ScrollCanvasAnimation({
         <MapPin className="w-4 h-4 text-[#FFBA00]" />
         Chapter 02 // Venue &amp; Fest
       </div>
-      <h2 className="chapter-title">
-        WHERE LOGIC MEETS
-        <span className="accent-text"> RAW COMPUTING POWER</span>
-      </h2>
-      <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-4xl text-left">
-        <div className="mini-card">
+      <div className="chapter-title flex flex-wrap items-center justify-center gap-x-[0.35em] gap-y-1">
+        <CurtainHeader as="span" text="WHERE LOGIC MEETS" startIndex={0} />
+        <CurtainHeader as="span" text="RAW COMPUTING POWER" startIndex={16} className="text-[#FFBA00]" curtainClassName="fx-curtain--amber" />
+      </div>
+      <div className="mt-5 sm:mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 w-full max-w-4xl text-left">
+        <div className="mini-card p-3.5 sm:p-5">
           <span className="mini-label">// FEST</span>
           <h3 className="mini-heading">ZYPHERIX &apos;26</h3>
           <p className="mini-text">
             National Level IT Fest spanning 27 &amp; 28 January 2026.
           </p>
         </div>
-        <div className="mini-card mini-card--hot">
+        <div className="mini-card mini-card--hot p-3.5 sm:p-5">
           <span className="mini-label">// EVENT</span>
           <h3 className="mini-heading">BYTEON CODING</h3>
           <p className="mini-text">
             The coding contest of the fest — held on 27 January 2026.
           </p>
         </div>
-        <div className="mini-card">
+        <div className="mini-card p-3.5 sm:p-5">
           <span className="mini-label">// VENUE</span>
           <h3 className="mini-heading">JAMIA HAMDARD</h3>
           <p className="mini-text">Kannur Campus, Kerala.</p>
@@ -324,47 +335,47 @@ export default function ScrollCanvasAnimation({
         <Code2 className="w-4 h-4 text-[#FFBA00]" />
         Chapter 03 // Competition Structure
       </div>
-      <h2 className="chapter-title">TWO ROUNDS</h2>
-      <p className="verify-note">
+      <CurtainHeader as="h2" text="TWO ROUNDS" className="chapter-title" />
+      <p className="verify-note text-xs sm:text-sm">
         Details below are from the previous draft, not the poster — confirm
         with the organisers before publishing.
       </p>
-      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-4xl text-left">
-        <div className="mini-card">
+      <div className="mt-4 sm:mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-6 w-full max-w-4xl text-left">
+        <div className="mini-card p-3.5 sm:p-5">
           <div className="flex items-center justify-between">
             <span className="round-tag">ROUND 01</span>
-            <span className="flex items-center gap-1 text-sm font-mono text-white">
+            <span className="flex items-center gap-1 text-xs sm:text-sm font-mono text-white">
               <Clock className="w-4 h-4 text-[#FFBA00]" /> 45 Minutes
             </span>
           </div>
-          <h3 className="mini-heading mt-3 flex items-center gap-2">
-            <Bug className="w-5 h-5 text-[#FFBA00]" /> Syntax Hunt &amp;
+          <h3 className="mini-heading mt-2.5 sm:mt-3 flex items-center gap-2 text-sm sm:text-base md:text-lg">
+            <Bug className="w-5 h-5 text-[#FFBA00] shrink-0" /> Syntax Hunt &amp;
             Debugging
           </h3>
-          <p className="mini-text">
+          <p className="mini-text text-xs sm:text-sm">
             Find the flaws, fix broken snippets, predict the output — against
             the clock. Top scorers advance.
           </p>
         </div>
-        <div className="mini-card">
+        <div className="mini-card p-3.5 sm:p-5">
           <div className="flex items-center justify-between">
             <span className="round-tag round-tag--bronze">ROUND 02</span>
-            <span className="flex items-center gap-1 text-sm font-mono text-white">
+            <span className="flex items-center gap-1 text-xs sm:text-sm font-mono text-white">
               <Clock className="w-4 h-4 text-[#E8A85C]" /> 90 Minutes
             </span>
           </div>
-          <h3 className="mini-heading mt-3 flex items-center gap-2">
-            <Terminal className="w-5 h-5 text-[#E8A85C]" /> The Algorithmic
+          <h3 className="mini-heading mt-2.5 sm:mt-3 flex items-center gap-2 text-sm sm:text-base md:text-lg">
+            <Terminal className="w-5 h-5 text-[#E8A85C] shrink-0" /> The Algorithmic
             Arena
           </h3>
-          <p className="mini-text">
+          <p className="mini-text text-xs sm:text-sm">
             Solve algorithmic challenges with optimal time and space
             complexity. Automated test-case evaluation, live ranking.
           </p>
         </div>
       </div>
-      <div className="fact-pill mt-5">
-        LANGUAGES: <strong className="text-white">C • C++ • Python • Java • JavaScript</strong>
+      <div className="fact-pill mt-4 sm:mt-5 text-xs sm:text-sm flex flex-wrap justify-center">
+        LANGUAGES: <strong className="text-white ml-1">C • C++ • Python • Java • JavaScript</strong>
       </div>
     </>,
 
@@ -374,32 +385,33 @@ export default function ScrollCanvasAnimation({
         <Trophy className="w-4 h-4 text-[#FFBA00]" />
         Chapter 04 // Prizes
       </div>
-      <h2 className="chapter-title">
-        TOTAL POOL <span className="accent-text">₹9,000/-</span>
-      </h2>
-      <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-4xl text-left">
+      <div className="chapter-title flex flex-wrap items-center justify-center gap-x-[0.35em] gap-y-1">
+        <CurtainHeader as="span" text="TOTAL POOL" startIndex={0} />
+        <CurtainHeader as="span" text="₹9,000/-" startIndex={10} className="text-[#FFBA00]" curtainClassName="fx-curtain--amber" />
+      </div>
+      <div className="mt-5 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 w-full max-w-4xl text-left">
         <div className="prize-card prize-card--first">
           <span className="prize-badge">CHAMPION</span>
           <span className="mini-label">First Prize</span>
           <div className="prize-amount">
-            ₹6,000<span className="text-2xl text-[#FFBA00]">/-</span>
+            ₹6,000<span className="text-xl sm:text-2xl text-[#FFBA00]">/-</span>
           </div>
-          <ul className="prize-list">
-            <li><CheckCircle2 className="w-4 h-4 text-[#FFBA00]" /> ₹6,000 cash prize</li>
-            <li><CheckCircle2 className="w-4 h-4 text-[#FFBA00]" /> Winner trophy &amp; shield</li>
-            <li><CheckCircle2 className="w-4 h-4 text-[#FFBA00]" /> Certificate of excellence</li>
+          <ul className="prize-list text-xs sm:text-sm">
+            <li><CheckCircle2 className="w-4 h-4 text-[#FFBA00] shrink-0" /> ₹6,000 cash prize</li>
+            <li><CheckCircle2 className="w-4 h-4 text-[#FFBA00] shrink-0" /> Winner trophy &amp; shield</li>
+            <li><CheckCircle2 className="w-4 h-4 text-[#FFBA00] shrink-0" /> Certificate of excellence</li>
           </ul>
         </div>
         <div className="prize-card prize-card--second">
           <span className="prize-badge prize-badge--amber">RUNNER-UP</span>
           <span className="mini-label">Second Prize</span>
           <div className="prize-amount">
-            ₹3,000<span className="text-2xl text-[#E8A85C]">/-</span>
+            ₹3,000<span className="text-xl sm:text-2xl text-[#E8A85C]">/-</span>
           </div>
-          <ul className="prize-list">
-            <li><CheckCircle2 className="w-4 h-4 text-[#E8A85C]" /> ₹3,000 cash prize</li>
-            <li><CheckCircle2 className="w-4 h-4 text-[#E8A85C]" /> Runner-up trophy</li>
-            <li><CheckCircle2 className="w-4 h-4 text-[#E8A85C]" /> Certificate of merit</li>
+          <ul className="prize-list text-xs sm:text-sm">
+            <li><CheckCircle2 className="w-4 h-4 text-[#E8A85C] shrink-0" /> ₹3,000 cash prize</li>
+            <li><CheckCircle2 className="w-4 h-4 text-[#E8A85C] shrink-0" /> Runner-up trophy</li>
+            <li><CheckCircle2 className="w-4 h-4 text-[#E8A85C] shrink-0" /> Certificate of merit</li>
           </ul>
         </div>
       </div>
@@ -411,12 +423,12 @@ export default function ScrollCanvasAnimation({
         <Calendar className="w-4 h-4 text-[#FFBA00]" />
         Chapter 05 // Day Schedule — 27 Jan
       </div>
-      <h2 className="chapter-title">TIMELINE OF THE ARENA</h2>
-      <p className="verify-note">
+      <CurtainHeader as="h2" text="TIMELINE OF THE ARENA" className="chapter-title" />
+      <p className="verify-note text-xs sm:text-sm">
         Timings below are from the previous draft, not the poster — confirm
         with the organisers before publishing.
       </p>
-      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-4xl text-left">
+      <div className="mt-4 sm:mt-6 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3.5 w-full max-w-4xl text-left">
         {[
           { time: "09:00 AM", title: "Reporting & Check-in", desc: "Badge collection at the Jamia Hamdard desk." },
           { time: "10:00 AM", title: "Inaugural & Rules Brief", desc: "Coordinators present the guidelines." },
@@ -425,10 +437,10 @@ export default function ScrollCanvasAnimation({
           { time: "02:00 PM", title: "Round 2: Algorithmic Duel", desc: "Qualifiers compete on live problem sets." },
           { time: "04:30 PM", title: "Grand Valedictory", desc: "₹6,000 & ₹3,000 prizes presented." },
         ].map((ev) => (
-          <div key={ev.time} className="mini-card">
-            <span className="font-mono text-sm font-bold text-[#FFBA00]">{ev.time}</span>
-            <h4 className="font-mono text-base font-bold text-white mt-1">{ev.title}</h4>
-            <p className="mini-text">{ev.desc}</p>
+          <div key={ev.time} className="mini-card !p-2.5 sm:!p-4">
+            <span className="font-mono text-xs sm:text-sm font-bold text-[#FFBA00] block">{ev.time}</span>
+            <h4 className="font-mono text-xs sm:text-sm md:text-base font-bold text-white mt-0.5 leading-snug">{ev.title}</h4>
+            <p className="mini-text text-[11px] sm:text-xs md:text-sm mt-1 text-[#F2EFE6]/80 hidden xs:block">{ev.desc}</p>
           </div>
         ))}
       </div>
@@ -440,17 +452,17 @@ export default function ScrollCanvasAnimation({
         <Cpu className="w-4 h-4 text-[#FFBA00]" />
         Chapter 06 // Corporate Backing
       </div>
-      <h2 className="chapter-title">OFFICIAL SPONSORS</h2>
-      <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-3xl text-center">
-        <div className="sponsor-card">
-          <span className="text-3xl font-black text-white font-mono tracking-tight">upcode.</span>
+      <CurtainHeader as="h2" text="OFFICIAL SPONSORS" className="chapter-title" />
+      <div className="mt-5 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-6 w-full max-w-3xl text-center">
+        <div className="sponsor-card p-4 sm:p-7">
+          <span className="text-2xl sm:text-3xl font-black text-white font-mono tracking-tight">upcode.</span>
           <span className="mini-label mt-1">SOFTWARE LABS</span>
-          <p className="mini-text mt-3">Official Technical Partner</p>
+          <p className="mini-text mt-2 sm:mt-3 text-xs sm:text-sm">Official Technical Partner</p>
         </div>
-        <div className="sponsor-card">
-          <span className="text-3xl font-black text-white font-mono tracking-wider">INFOMAC</span>
+        <div className="sponsor-card p-4 sm:p-7">
+          <span className="text-2xl sm:text-3xl font-black text-white font-mono tracking-wider">INFOMAC</span>
           <span className="mini-label mt-1">SYSTEMS</span>
-          <p className="mini-text mt-3">Official Infrastructure Partner</p>
+          <p className="mini-text mt-2 sm:mt-3 text-xs sm:text-sm">Official Infrastructure Partner</p>
         </div>
       </div>
     </>,
@@ -461,17 +473,17 @@ export default function ScrollCanvasAnimation({
         <Phone className="w-4 h-4 text-[#FFBA00]" />
         Chapter 07 // Student Coordinators
       </div>
-      <h2 className="chapter-title">GET IN TOUCH</h2>
-      <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-3xl text-left">
+      <CurtainHeader as="h2" text="GET IN TOUCH" className="chapter-title" />
+      <div className="mt-5 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-6 w-full max-w-3xl text-left">
         {[
           { name: "Khalid Adeel", phone: "+91 8590090507", tel: "+918590090507", wa: "918590090507" },
           { name: "Nihma Parveen", phone: "+91 8137831382", tel: "+918137831382", wa: "918137831382" },
         ].map((c) => (
-          <div key={c.phone} className="mini-card">
+          <div key={c.phone} className="mini-card p-3.5 sm:p-5">
             <span className="mini-label">Student Coordinator</span>
-            <h3 className="text-2xl font-black text-white font-mono mt-1">{c.name}</h3>
-            <p className="text-xl font-mono font-bold text-[#FFBA00] mt-1">{c.phone}</p>
-            <div className="grid grid-cols-2 gap-2 mt-4">
+            <h3 className="text-xl sm:text-2xl font-black text-white font-mono mt-1">{c.name}</h3>
+            <p className="text-base sm:text-xl font-mono font-bold text-[#FFBA00] mt-1">{c.phone}</p>
+            <div className="grid grid-cols-2 gap-2 mt-3 sm:mt-4">
               <a href={`tel:${c.tel}`} className="contact-btn">Call</a>
               <a
                 href={`https://wa.me/${c.wa}?text=Hi%2C%20I%20have%20a%20question%20about%20Byteon%20at%20Zypherix.`}
@@ -485,43 +497,58 @@ export default function ScrollCanvasAnimation({
           </div>
         ))}
       </div>
-      <div className="fact-pill mt-5">
+      <div className="fact-pill mt-4 sm:mt-5 text-xs sm:text-sm flex flex-wrap justify-center">
         <Mail className="w-4 h-4 text-[#FFBA00]" />
-        Official mail: <strong className="text-white">zypherix2026@gmail.com</strong>
+        Official mail: <strong className="text-white ml-1 break-all sm:break-normal">zypherix2026@gmail.com</strong>
       </div>
     </>,
 
     /* 8 — REGISTER */
     <>
-      <div className="register-panel">
-        <div className="qr-box">
-          {/* Keep the QR at near-native size (source is 150px) — upscaling it blurs the code. */}
-          <img src="/qr-code.png" alt="Registration QR code" width={150} height={150} />
-          <span className="mt-2 text-[11px] font-mono font-bold text-black uppercase tracking-wider">
+      <div className="register-panel flex flex-col md:flex-row items-center gap-4 sm:gap-6 md:gap-8 w-full">
+        <div className="qr-box p-3 sm:p-4">
+          {/* Keep the QR at near-native size — upscaling it blurs the code. */}
+          <img src="/qr-code.png" alt="Registration QR code" className="w-28 h-28 sm:w-36 sm:h-36 object-contain" width={144} height={144} />
+          <span className="mt-2 text-[10px] sm:text-[11px] font-mono font-bold text-black uppercase tracking-wider">
             Scan to register
           </span>
+          <span className="text-[10px] sm:text-[11px] font-mono font-black text-[#B46617] uppercase tracking-wider">
+            Fee: Rs. 499
+          </span>
         </div>
-        <div className="text-center md:text-left">
+        <div className="text-center md:text-left flex-1 min-w-0">
           <div className="chip">
             <Sparkles className="w-4 h-4 text-[#FFBA00]" />
             Final Chapter // Lock Your Slot
           </div>
-          <h3 className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight mt-3">
-            REGISTER FOR BYTEON
-          </h3>
-          <p className="body-text mt-3">
+          <CurtainHeader
+            as="h3"
+            text="REGISTER FOR BYTEON"
+            className="text-2xl sm:text-3xl md:text-4xl font-black text-white font-mono tracking-tight mt-2 sm:mt-3"
+          />
+          <p className="body-text mt-2 sm:mt-3 text-xs sm:text-sm md:text-base">
             Compete for ₹9,000/- on 27 January 2026 at Jamia Hamdard Kannur
             Campus. Scan the code or open the form below.
           </p>
-          <div className="pt-4 flex flex-wrap gap-3 justify-center md:justify-start">
-            <button onClick={onRegisterClick} className="cta-primary">
+
+          {/* Registration Fee Highlight Pill */}
+          <div className="mt-3 sm:mt-4 flex flex-wrap items-center gap-2 sm:gap-3 justify-center md:justify-start">
+            <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 rounded-xl bg-[#FFBA00]/15 border border-[#FFBA00]/50 text-white font-mono text-xs sm:text-sm shadow-[0_0_15px_rgba(255,186,0,0.15)]">
+              <Ticket className="w-4 h-4 text-[#FFBA00]" />
+              <span>Registration Fee: <strong className="text-[#FFBA00] font-black">Rs. 499</strong></span>
+            </div>
+            <span className="fact-pill text-[11px] sm:text-xs">Per Team / Participant</span>
+          </div>
+
+          <div className="pt-3 sm:pt-4 flex flex-wrap gap-2.5 sm:gap-3 justify-center md:justify-start">
+            <button onClick={onRegisterClick} className="cta-primary text-xs sm:text-sm">
               <QrCode className="w-4 h-4" /> OPEN REGISTRATION FORM
             </button>
-            <button onClick={onPosterClick} className="cta-secondary">
+            <button onClick={onPosterClick} className="cta-secondary text-xs sm:text-sm">
               <ImageIcon className="w-4 h-4 text-[#FFBA00]" /> VIEW POSTER
             </button>
           </div>
-          <p className="text-xs font-mono text-white/70 pt-3">
+          <p className="text-[11px] sm:text-xs font-mono text-white/70 pt-2 sm:pt-3">
             Zypherix 2026 • 27–28 January • Jamia Hamdard Kannur Campus
           </p>
         </div>
@@ -578,29 +605,29 @@ export default function ScrollCanvasAnimation({
       </div>
 
       {/* Header — solid, not translucent-blur dependent */}
-      <header className="fixed top-0 left-0 right-0 z-30 px-4 sm:px-8 py-4 flex items-center justify-between bg-[#04070d]/95 border-b border-white/10">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-[#FFBA00]/15 border border-[#FFBA00]/40 flex items-center justify-center text-[#FFBA00]">
-            <Terminal className="w-5 h-5" />
+      <header className="fixed top-0 left-0 right-0 z-30 px-3 sm:px-8 py-2.5 sm:py-3.5 flex items-center justify-between bg-[#04070d]/95 border-b border-white/10 backdrop-blur-md">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#FFBA00]/15 border border-[#FFBA00]/40 flex items-center justify-center text-[#FFBA00] shrink-0">
+            <Terminal className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
-          <div>
-            <span className="font-mono font-black text-white text-base tracking-wider">
-              BYTEON <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#FFBA00]/15 text-[#FFBA00] border border-white/15 font-bold">2026</span>
+          <div className="min-w-0">
+            <span className="font-mono font-black text-white text-sm sm:text-base tracking-wider flex items-center gap-1.5">
+              BYTEON <span className="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded bg-[#FFBA00]/15 text-[#FFBA00] border border-white/15 font-bold">2026</span>
             </span>
-            <p className="text-[11px] font-mono uppercase tracking-widest text-white/70 -mt-0.5">
+            <p className="text-[9px] sm:text-[11px] font-mono uppercase tracking-widest text-white/70 -mt-0.5 truncate max-w-[150px] xs:max-w-xs sm:max-w-none">
               Zypherix National IT Fest • 27, 28 Jan
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <button
             onClick={onPosterClick}
-            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0b1120] border border-white/20 text-white text-xs font-mono"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0b1120] border border-white/20 text-white text-xs font-mono hover:border-[#FFBA00]/50 transition-colors"
           >
             <ImageIcon className="w-3.5 h-3.5 text-[#FFBA00]" /> Event Poster
           </button>
-          <button onClick={onRegisterClick} className="cta-primary !px-4 !py-2">
-            <QrCode className="w-3.5 h-3.5" /> REGISTER NOW
+          <button onClick={onRegisterClick} className="cta-primary !px-3 sm:!px-4 !py-1.5 sm:!py-2 text-xs">
+            <QrCode className="w-3.5 h-3.5" /> <span>REGISTER NOW</span>
           </button>
         </div>
       </header>
@@ -608,7 +635,7 @@ export default function ScrollCanvasAnimation({
       {/* Chapter dots */}
       <nav
         aria-label="Chapter timeline"
-        className="fixed right-3 sm:right-6 top-1/2 -translate-y-1/2 z-30 hidden md:flex flex-col gap-3 p-2.5 rounded-2xl bg-black/85 border border-white/20"
+        className="fixed right-3 sm:right-6 top-1/2 -translate-y-1/2 z-30 hidden lg:flex flex-col gap-3 p-2.5 rounded-2xl bg-black/85 border border-white/20 backdrop-blur-md"
       >
         {CHAPTERS.map((ch, idx) => (
           <button
@@ -633,7 +660,7 @@ export default function ScrollCanvasAnimation({
       </nav>
 
       {/* Bottom status bar — solid, with a real progress bar */}
-      <footer className="fixed bottom-0 left-0 right-0 z-30 bg-[#04070d]/95 border-t border-white/10">
+      <footer className="fixed bottom-0 left-0 right-0 z-30 bg-[#04070d]/95 border-t border-white/10 backdrop-blur-md">
         <div className="h-1 w-full bg-white/10">
           <div
             ref={progressBarRef}
@@ -641,15 +668,18 @@ export default function ScrollCanvasAnimation({
             style={{ width: "0%", background: "linear-gradient(90deg, #B46617, #FFBA00)" }}
           />
         </div>
-        <div className="px-4 sm:px-8 py-2.5 flex items-center justify-between text-xs font-mono text-white/80">
-          <span className="flex items-center gap-2">
+        <div className="px-3 sm:px-8 py-2 sm:py-2.5 flex items-center justify-between text-[11px] sm:text-xs font-mono text-white/80">
+          <span className="flex items-center gap-2 min-w-0 mr-2">
             {/* Emerald survives here only: the system/live mark. */}
-            <span className="w-2 h-2 rounded-full bg-[#00F5A0] animate-pulse" />
-            <span className="text-white/50">CURRENT CHAPTER: </span>
-            <strong className="text-white">{CHAPTERS[activeChapter]?.title}</strong>
+            <span className="w-2 h-2 rounded-full bg-[#00F5A0] animate-pulse shrink-0" />
+            <span className="text-white/50 hidden xs:inline">CURRENT CHAPTER: </span>
+            <strong className="text-white truncate">{CHAPTERS[activeChapter]?.title}</strong>
           </span>
-          <span className="hidden sm:inline">
-            {activeChapter + 1} / {CHAPTER_COUNT} — scroll for the next detail
+          <span className="shrink-0 text-[10px] sm:text-xs">
+            <span className="sm:hidden font-bold text-[#FFBA00]">{activeChapter + 1}/{CHAPTER_COUNT}</span>
+            <span className="hidden sm:inline">
+              {activeChapter + 1} / {CHAPTER_COUNT} — scroll for the next detail
+            </span>
           </span>
         </div>
       </footer>
@@ -663,8 +693,8 @@ export default function ScrollCanvasAnimation({
         its own pointer events when visible, so invisible chapters never
         block clicks.)
       */}
-      <div className="fixed inset-0 z-10 flex items-center justify-center pointer-events-none">
-        <div className="relative w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-center">
+      <div className="fixed inset-0 z-10 flex items-center justify-center pointer-events-none pt-14 pb-12 sm:pt-16 sm:pb-14">
+        <div className="relative w-full max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 h-full flex items-center justify-center">
           {chapterBody.map((body, i) => (
             <div
               key={CHAPTERS[i].id}
@@ -672,7 +702,7 @@ export default function ScrollCanvasAnimation({
                 chapterRefs.current[i] = el;
               }}
               /* No transition class here — opacity is driven per-frame by rAF. */
-              className="absolute inset-0 flex flex-col items-center justify-center text-center p-4"
+              className="absolute inset-0 flex flex-col items-center justify-center text-center p-2 sm:p-4"
               style={{ opacity: i === 0 ? 1 : 0, visibility: i === 0 ? "visible" : "hidden" }}
             >
               <div className="chapter-panel">{body}</div>

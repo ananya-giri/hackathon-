@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, QrCode, CheckCircle2, Copy, Send, Sparkles, AlertCircle } from "lucide-react";
+import { X, QrCode, CheckCircle2, Copy, Send, Sparkles, AlertCircle, Ticket } from "lucide-react";
 
 interface RegistrationModalProps {
   isOpen: boolean;
@@ -34,8 +34,8 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md overflow-y-auto">
-      <div className="relative w-full max-w-2xl my-auto bg-[#080d1a] border border-[#FFBA00]/40 rounded-2xl p-6 sm:p-8 shadow-[0_0_50px_rgba(255,186,0,0.25)] text-white">
+    <div className="fixed inset-0 z-50 flex justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-md overflow-y-auto">
+      <div className="relative w-full max-w-2xl my-auto bg-[#080d1a] border border-[#FFBA00]/40 rounded-2xl p-4 sm:p-6 md:p-8 shadow-[0_0_50px_rgba(255,186,0,0.25)] text-white">
         
         {/* Close Button */}
         <button
@@ -79,6 +79,16 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
               <p className="text-xs sm:text-sm font-mono text-[#A8BFAF] mt-1">
                 27 January 2026 • Jamia Hamdard Kannur Campus
               </p>
+
+              {/* Registration Fee Banner */}
+              <div className="mt-3 inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#FFBA00]/10 border border-[#FFBA00]/50 shadow-[0_0_18px_rgba(255,186,0,0.15)]">
+                <Ticket className="w-4 h-4 text-[#FFBA00] shrink-0" />
+                <span className="font-mono text-sm text-white">
+                  Registration Fee:{" "}
+                  <strong className="text-[#FFBA00] font-black text-base">Rs. 499</strong>
+                  <span className="text-[#A8BFAF] text-xs ml-1.5">/ per participant</span>
+                </span>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-5 gap-6 items-center">
@@ -128,7 +138,7 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-mono text-[#A8BFAF] mb-1">
                       Email Address *
@@ -172,7 +182,7 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-mono text-[#A8BFAF] mb-1">
                       Academic Year
@@ -220,12 +230,17 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
               </form>
             </div>
 
-            <div className="mt-4 pt-3 border-t border-white/15 flex items-center justify-between text-[11px] font-mono text-[#FFBA00]/60">
+            <div className="mt-4 pt-3 border-t border-white/15 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-[11px] font-mono text-[#FFBA00]/60">
               <span className="flex items-center gap-1">
                 <AlertCircle className="w-3.5 h-3.5 text-[#FFBA00]" />
                 Spot registration subject to seat limits.
               </span>
-              <span>Event Date: 27 Jan 2026</span>
+              <div className="flex items-center gap-3">
+                <span className="flex items-center gap-1 text-[#FFBA00]/80 font-bold">
+                  <Ticket className="w-3.5 h-3.5" /> Fee: Rs. 499
+                </span>
+                <span>Event Date: 27 Jan 2026</span>
+              </div>
             </div>
           </div>
         )}

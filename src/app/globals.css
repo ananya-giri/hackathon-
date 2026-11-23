@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -6,7 +8,9 @@
  * BYTEON 2026 — DESIGN SYSTEM v2
  *
  * Palette (three roles, nothing else — that restraint is what keeps it classy):
- *   --ink     #050811  page / panel base
+ *   --ink     currentColor page / panel base / text
+ *   --ink-2   #FF4FD8  primary accent
+ *   --ink-3   #4FF8FF  secondary accent
  *   --emerald #00F5A0  STRUCTURAL only — live dot, system marks, chapter counter
  *   --amber   #FFBA00  ACTION + EMPHASIS — CTAs, key numbers, kickers, active states
  *   --bronze  #B46617  PREMIUM only — champion badge, rules, dividers.
@@ -29,7 +33,9 @@
  */
 
 :root {
-  --ink: #050811;
+  --ink: currentColor;
+  --ink-2: #FF4FD8;
+  --ink-3: #4FF8FF;
   --emerald: #00f5a0;
   --amber: #ffba00;
   --amber-bright: #ffc933;
@@ -86,25 +92,37 @@ body {
   width: 100%;
   max-width: 880px;
   margin: 0 auto;
-  padding: 2rem 1.75rem;
+  padding: 1.25rem 1rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: linear-gradient(180deg, rgba(3, 6, 12, 0.30) 0%, rgba(3, 6, 12, 0.44) 100%);
-  -webkit-backdrop-filter: blur(10px) saturate(1.25);
-  backdrop-filter: blur(10px) saturate(1.25);
+  background: linear-gradient(180deg, rgba(3, 6, 12, 0.40) 0%, rgba(3, 6, 12, 0.60) 100%);
+  -webkit-backdrop-filter: blur(12px) saturate(1.25);
+  backdrop-filter: blur(12px) saturate(1.25);
   border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 1.5rem;
+  border-radius: 1.25rem;
   box-shadow:
-    0 24px 70px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.09);
+    0 24px 70px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  max-height: calc(100dvh - 6.5rem);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .chapter-panel--static {
   max-width: none;
+  max-height: none;
 }
 
 @media (min-width: 640px) {
+  .chapter-panel {
+    padding: 2.25rem 2.5rem;
+    border-radius: 1.5rem;
+    max-height: calc(100dvh - 7.5rem);
+  }
+}
+
+@media (min-width: 1024px) {
   .chapter-panel {
     padding: 2.75rem 3rem;
   }
@@ -114,8 +132,8 @@ body {
 /* Type scale.                                                          */
 /* ------------------------------------------------------------------ */
 .hero-title {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: clamp(3.5rem, 12vw, 7.5rem);
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: clamp(2.5rem, 10vw, 7.5rem);
   line-height: 0.95;
   font-weight: 900;
   letter-spacing: -0.04em;
@@ -126,14 +144,73 @@ body {
 }
 
 .chapter-title {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: clamp(1.7rem, 5vw, 3rem);
-  line-height: 1.1;
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: clamp(1.4rem, 4.5vw, 2.75rem);
+  line-height: 1.15;
   font-weight: 900;
   letter-spacing: -0.02em;
   color: #ffffff;
-  margin-top: 0.75rem;
+  margin-top: 0.5rem;
   text-shadow: 0 2px 16px rgba(0, 0, 0, 0.65);
+}
+
+/* ------------------------------------------------------------------ */
+/* 122 Curtain-Call — letters rise from behind a hard mask, hold, exit */
+/* ------------------------------------------------------------------ */
+.fx-curtain {
+  display: inline-flex;
+  overflow: hidden;
+  padding: .04em .04em .14em;
+  font: 700 38px/1.2 "JetBrains Mono", monospace;
+  letter-spacing: .08em;
+  color: var(--ink);
+}
+.fx-curtain b {
+  display: inline-block;
+  font-weight: inherit;
+  color: var(--ink);
+  -webkit-text-fill-color: transparent;
+  background: linear-gradient(180deg, var(--ink) 38%, color-mix(in srgb, var(--ink-3) 72%, var(--ink)) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: fx-curtain-rise 4.4s cubic-bezier(.76, 0, .24, 1) infinite;
+  animation-delay: calc(var(--i) * .07s);
+  will-change: transform;
+}
+@keyframes fx-curtain-rise {
+  0%, 6%    { transform: translateY(115%) rotate(3deg); opacity: 0; filter: blur(3px); }
+  12%       { opacity: 1; filter: blur(0); }
+  34%, 64%  { transform: translateY(0) rotate(0); opacity: 1; filter: blur(0); }
+  84%, 100% { transform: translateY(-115%) rotate(-3deg); opacity: 0; filter: blur(3px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fx-curtain b { animation: none; opacity: 1; transform: none; filter: none; }
+}
+
+/* Responsive adjustments for fx-curtain across mobile and tablet */
+@media (max-width: 640px) {
+  .fx-curtain {
+    font-size: clamp(19px, 5.2vw, 26px);
+    letter-spacing: .04em;
+  }
+}
+@media (min-width: 641px) and (max-width: 1024px) {
+  .fx-curtain {
+    font-size: clamp(24px, 3.8vw, 32px);
+    letter-spacing: .06em;
+  }
+}
+
+.fx-curtain--hero {
+  font-size: clamp(2.5rem, 10vw, 6.5rem) !important;
+  line-height: 1.05 !important;
+  letter-spacing: -0.02em !important;
+}
+
+.fx-curtain--amber {
+  --ink: #ffba00;
+  --ink-3: #ffe600;
+  color: #ffba00;
 }
 
 /* The one emphasis colour. (Was a green gradient — now solid amber.) */
@@ -179,30 +256,51 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.55rem 0.9rem;
+  padding: 0.45rem 0.75rem;
   border-radius: 0.75rem;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.14);
   color: #f2efe6;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .fact-pill {
+    padding: 0.55rem 0.9rem;
+    font-size: 0.875rem;
+  }
 }
 
 .verify-note {
-  margin-top: 0.75rem;
+  margin-top: 0.5rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: #ffba00;
   max-width: 34rem;
 }
 
+@media (min-width: 640px) {
+  .verify-note {
+    margin-top: 0.75rem;
+    font-size: 0.8rem;
+  }
+}
+
 /* Cards inside a chapter: translucent white wash + blur — video visible. */
 .mini-card {
-  padding: 1.25rem;
-  border-radius: 1rem;
+  padding: 0.85rem;
+  border-radius: 0.875rem;
   background: rgba(255, 255, 255, 0.05);
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.13);
+}
+
+@media (min-width: 640px) {
+  .mini-card {
+    padding: 1.25rem;
+    border-radius: 1rem;
+  }
 }
 
 .mini-card--hot {
@@ -211,28 +309,50 @@ body {
 
 .mini-label {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.75rem;
-  letter-spacing: 0.14em;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: #ffba00;
 }
 
+@media (min-width: 640px) {
+  .mini-label {
+    font-size: 0.75rem;
+    letter-spacing: 0.14em;
+  }
+}
+
 .mini-heading {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 1.15rem;
+  font-size: 0.95rem;
   font-weight: 800;
   color: #ffffff;
-  margin-top: 0.35rem;
+  margin-top: 0.3rem;
   text-shadow: 0 1px 10px rgba(0, 0, 0, 0.6);
+}
+
+@media (min-width: 640px) {
+  .mini-heading {
+    font-size: 1.15rem;
+    margin-top: 0.35rem;
+  }
 }
 
 .mini-text {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.875rem;
-  line-height: 1.6;
+  font-size: 0.75rem;
+  line-height: 1.55;
   color: #f2efe6;
-  margin-top: 0.4rem;
+  margin-top: 0.3rem;
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
+}
+
+@media (min-width: 640px) {
+  .mini-text {
+    font-size: 0.875rem;
+    margin-top: 0.4rem;
+    line-height: 1.6;
+  }
 }
 
 .round-tag {
@@ -255,12 +375,18 @@ body {
 
 .prize-card {
   position: relative;
-  padding: 1.75rem;
+  padding: 1.25rem;
   border-radius: 1.25rem;
   background: rgba(255, 255, 255, 0.05);
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   border: 2px solid #ffba00;
+}
+
+@media (min-width: 640px) {
+  .prize-card {
+    padding: 1.75rem;
+  }
 }
 
 .prize-card--second {
@@ -289,7 +415,7 @@ body {
 
 .prize-amount {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 3rem;
+  font-size: clamp(2.2rem, 5vw, 3rem);
   font-weight: 900;
   color: #ffba00;
   margin-top: 0.25rem;
@@ -315,7 +441,7 @@ body {
 }
 
 .sponsor-card {
-  padding: 2rem;
+  padding: 1.25rem;
   border-radius: 1.25rem;
   background: rgba(255, 255, 255, 0.05);
   -webkit-backdrop-filter: blur(10px);
@@ -326,16 +452,30 @@ body {
   align-items: center;
 }
 
+@media (min-width: 640px) {
+  .sponsor-card {
+    padding: 2rem;
+  }
+}
+
 .contact-btn {
   display: block;
-  padding: 0.6rem 0.75rem;
+  padding: 0.5rem 0.6rem;
   border-radius: 0.75rem;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.16);
   color: #f2efe6;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   text-align: center;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+@media (min-width: 640px) {
+  .contact-btn {
+    padding: 0.6rem 0.75rem;
+    font-size: 0.8rem;
+  }
 }
 
 .contact-btn--wa {
@@ -350,12 +490,19 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.75rem;
+  gap: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .register-panel {
+    gap: 1.75rem;
+  }
 }
 
 @media (min-width: 768px) {
   .register-panel {
     flex-direction: row;
+    align-items: flex-start;
     text-align: left;
   }
 }
