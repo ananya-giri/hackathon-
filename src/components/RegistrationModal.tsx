@@ -36,7 +36,7 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
   return (
     <div className="fixed inset-0 z-50 flex justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-md overflow-y-auto">
       <div className="relative w-full max-w-2xl my-auto bg-[#080d1a] border border-[#FFBA00]/40 rounded-2xl p-4 sm:p-6 md:p-8 shadow-[0_0_50px_rgba(255,186,0,0.25)] text-white">
-        
+
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -239,7 +239,7 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
                 <span className="flex items-center gap-1 text-[#FFBA00]/80 font-bold">
                   <Ticket className="w-3.5 h-3.5" /> Fee: Rs. 499
                 </span>
-                <span>Event Date: 27 Jan 2026</span>
+                <span>Event Date: 27 Jan 2027</span>
               </div>
             </div>
           </div>
