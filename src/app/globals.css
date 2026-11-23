@@ -1,11 +1,29 @@
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800;900&display=swap');
 
+@font-face {
+  font-family: 'ChildHood';
+  src: url('/child-hood/Child%20Hood.otf') format('opentype'),
+       url('/child-hood/Child Hood.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Child Hood';
+  src: url('/child-hood/Child%20Hood.otf') format('opentype'),
+       url('/child-hood/Child Hood.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /*
- * BYTEON 2026 — DESIGN SYSTEM v2
+ * BYTEON 2027 — DESIGN SYSTEM v2
  *
  * Palette (three roles, nothing else — that restraint is what keeps it classy):
  *   --ink     currentColor page / panel base / text
@@ -219,11 +237,17 @@ body {
 }
 
 .body-text {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 1rem;
+  font-family: var(--font-childhood), 'ChildHood', 'Child Hood', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 1.15rem;
   line-height: 1.65;
   color: #f2efe6;
+  letter-spacing: 0.02em;
   text-shadow: 0 1px 12px rgba(0, 0, 0, 0.65);
+}
+
+.desc-text {
+  font-family: var(--font-childhood), 'ChildHood', 'Child Hood', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  letter-spacing: 0.02em;
 }
 
 /* Kicker chip: amber label on a translucent dark chip. */
@@ -339,17 +363,18 @@ body {
 }
 
 .mini-text {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.75rem;
+  font-family: var(--font-childhood), 'ChildHood', 'Child Hood', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 0.95rem;
   line-height: 1.55;
   color: #f2efe6;
   margin-top: 0.3rem;
+  letter-spacing: 0.02em;
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
 }
 
 @media (min-width: 640px) {
   .mini-text {
-    font-size: 0.875rem;
+    font-size: 1.05rem;
     margin-top: 0.4rem;
     line-height: 1.6;
   }

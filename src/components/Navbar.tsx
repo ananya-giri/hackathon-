@@ -18,8 +18,8 @@ export default function Navbar({ onRegisterClick, onPosterClick }: NavbarProps) 
     };
     window.addEventListener("scroll", handleScroll);
 
-    // Countdown to Jan 27, 2026 09:00:00 AM
-    const targetDate = new Date("2026-01-27T09:00:00").getTime();
+    // Countdown to Jan 27, 2027 09:00:00 AM
+    const targetDate = new Date("2027-01-27T09:00:00").getTime();
     const updateCountdown = () => {
       const now = new Date().getTime();
       const diff = targetDate - now;
@@ -63,7 +63,7 @@ export default function Navbar({ onRegisterClick, onPosterClick }: NavbarProps) 
           </div>
           <div className="flex flex-col">
             <span className="font-mono font-black text-lg tracking-wider text-white flex items-center gap-1.5">
-              BYTEON <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-[#00f5a0] border border-emerald-500/40">2026</span>
+              BYTEON <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-[#00f5a0] border border-emerald-500/40">2027</span>
             </span>
             <span className="text-[10px] font-mono tracking-widest uppercase text-emerald-400/70 -mt-1">
               Zypherix IT Fest

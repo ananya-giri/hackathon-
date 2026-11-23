@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { X, QrCode, CheckCircle2, Copy, Send, Sparkles, AlertCircle, Ticket } from "lucide-react";
+import StarButton from "./StarButton";
 
 interface RegistrationModalProps {
   isOpen: boolean;
@@ -51,19 +52,18 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
               <CheckCircle2 className="w-8 h-8 text-[#FFBA00]" />
             </div>
             <h3 className="text-2xl font-bold font-mono">REGISTRATION SUBMITTED!</h3>
-            <p className="text-sm font-mono text-[#F2EFE6]/80 max-w-md mx-auto">
+            <p className="desc-text text-sm text-[#F2EFE6]/80 max-w-md mx-auto">
               Your details have been received. Please scan the QR code to complete the verification or contact the coordinators on WhatsApp.
             </p>
             <div className="pt-4 flex justify-center gap-3">
-              <button
+              <StarButton
                 onClick={() => {
                   setSubmitted(false);
                   onClose();
                 }}
-                className="px-6 py-2.5 rounded-xl bg-[#FFBA00] text-black font-bold font-mono text-xs"
               >
                 CLOSE WINDOW
-              </button>
+              </StarButton>
             </div>
           </div>
         ) : (
@@ -71,13 +71,13 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
             <div className="mb-6">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFBA00]/10 border border-[#FFBA00]/40 text-[#FFBA00] text-xs font-mono mb-2">
                 <Sparkles className="w-3.5 h-3.5 text-[#FFBA00]" />
-                ZYPHERIX 2026 // CODING EVENT
+                ZYPHERIX 2027 // CODING EVENT
               </div>
               <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight font-mono text-white">
                 REGISTER FOR BYTEON
               </h2>
-              <p className="text-xs sm:text-sm font-mono text-[#A8BFAF] mt-1">
-                27 January 2026 • Jamia Hamdard Kannur Campus
+              <p className="desc-text text-xs sm:text-sm text-[#A8BFAF] mt-1">
+                27 January 2027 • Jamia Hamdard Kannur Campus
               </p>
 
               {/* Registration Fee Banner */}
@@ -105,7 +105,7 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
                   <QrCode className="w-3.5 h-3.5" />
                   OFFICIAL SCANNER
                 </span>
-                <p className="text-[11px] font-mono text-[#A8BFAF] mt-1">
+                <p className="desc-text text-[11px] text-[#A8BFAF] mt-1">
                   Scan with your phone camera or GPay / UPI scanner to register directly.
                 </p>
 
@@ -219,13 +219,13 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
                 </div>
 
                 <div className="pt-2">
-                  <button
+                  <StarButton
                     type="submit"
-                    className="w-full py-3 rounded-xl bg-[#FFBA00] text-black font-extrabold font-mono text-xs tracking-wider hover:shadow-[0_0_25px_rgba(255,186,0,0.5)] transition-all flex items-center justify-center gap-2"
+                    className="w-full !py-3 !text-xs !border-2"
                   >
                     <Send className="w-3.5 h-3.5" />
                     <span>CONFIRM REGISTRATION</span>
-                  </button>
+                  </StarButton>
                 </div>
               </form>
             </div>

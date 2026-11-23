@@ -51,7 +51,7 @@ export default function ScheduleSection() {
         <div className="text-center max-w-2xl mx-auto mb-16">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-950/70 border border-emerald-400/30 text-emerald-300 text-xs font-mono tracking-widest uppercase mb-4">
             <Calendar className="w-3.5 h-3.5 text-[#00f5a0]" />
-            Timeline // 27 January 2026
+            Timeline // 27 January 2027
           </div>
           <h2 className="text-4xl sm:text-5xl font-black tracking-tight text-white font-mono">
             EVENT <span className="text-[#00d9f5]">SCHEDULE</span>

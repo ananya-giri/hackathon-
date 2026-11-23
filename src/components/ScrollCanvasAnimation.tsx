@@ -64,6 +64,7 @@ import {
   Ticket,
 } from "lucide-react";
 import CurtainHeader from "./CurtainHeader";
+import StarButton from "./StarButton";
 
 interface ScrollCanvasAnimationProps {
   onRegisterClick: () => void;
@@ -258,7 +259,7 @@ export default function ScrollCanvasAnimation({
     <>
       <div className="chip">
         <Terminal className="w-4 h-4 text-[#FFBA00]" />
-        Zypherix 2026 // National Level IT Fest
+        Zypherix 2027 // National Level IT Fest
       </div>
       <CurtainHeader
         as="h1"
@@ -280,7 +281,7 @@ export default function ScrollCanvasAnimation({
           Fee: Rs. 499
         </span>
         <span className="fact-pill">Jamia Hamdard Kannur Campus</span>
-        <span className="fact-pill">27–28 January 2026</span>
+        <span className="fact-pill">27–28 January 2027</span>
       </div>
       <div className="mt-6 sm:mt-8 flex items-center gap-2 text-xs sm:text-sm font-mono text-white animate-bounce">
         <span>SCROLL TO STEP THROUGH THE EVENT</span>
@@ -301,16 +302,16 @@ export default function ScrollCanvasAnimation({
       <div className="mt-5 sm:mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 w-full max-w-4xl text-left">
         <div className="mini-card p-3.5 sm:p-5">
           <span className="mini-label">// FEST</span>
-          <h3 className="mini-heading">ZYPHERIX &apos;26</h3>
+          <h3 className="mini-heading">ZYPHERIX &apos;27</h3>
           <p className="mini-text">
-            National Level IT Fest spanning 27 &amp; 28 January 2026.
+            National Level IT Fest spanning 27 &amp; 28 January 2027.
           </p>
         </div>
         <div className="mini-card mini-card--hot p-3.5 sm:p-5">
           <span className="mini-label">// EVENT</span>
           <h3 className="mini-heading">BYTEON CODING</h3>
           <p className="mini-text">
-            The coding contest of the fest — held on 27 January 2026.
+            The coding contest of the fest — held on 27 January 2027.
           </p>
         </div>
         <div className="mini-card p-3.5 sm:p-5">
@@ -397,15 +398,18 @@ export default function ScrollCanvasAnimation({
             <h3 className="text-xl sm:text-2xl font-black text-white font-mono mt-1">{c.name}</h3>
             <p className="text-base sm:text-xl font-mono font-bold text-[#FFBA00] mt-1">{c.phone}</p>
             <div className="grid grid-cols-2 gap-2 mt-3 sm:mt-4">
-              <a href={`tel:${c.tel}`} className="contact-btn">Call</a>
-              <a
+              <StarButton as="a" href={`tel:${c.tel}`} className="!py-2 !px-3 !text-xs !border-2">
+                Call
+              </StarButton>
+              <StarButton
+                as="a"
                 href={`https://wa.me/${c.wa}?text=Hi%2C%20I%20have%20a%20question%20about%20Byteon%20at%20Zypherix.`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="contact-btn contact-btn--wa"
+                className="!py-2 !px-3 !text-xs !border-2"
               >
                 WhatsApp
-              </a>
+              </StarButton>
             </div>
           </div>
         ))}
@@ -416,7 +420,7 @@ export default function ScrollCanvasAnimation({
       </div>
     </>,
 
-    /* 8 — REGISTER */
+    /* 6 — REGISTER */
     <>
       <div className="register-panel flex flex-col md:flex-row items-center gap-4 sm:gap-6 md:gap-8 w-full">
         <div className="qr-box p-3 sm:p-4">
@@ -440,7 +444,7 @@ export default function ScrollCanvasAnimation({
             className="text-2xl sm:text-3xl md:text-4xl font-black text-white font-mono tracking-tight mt-2 sm:mt-3"
           />
           <p className="body-text mt-2 sm:mt-3 text-xs sm:text-sm md:text-base">
-            Compete for ₹9,000/- on 27 January 2026 at Jamia Hamdard Kannur
+            Compete for ₹9,000/- on 27 January 2027 at Jamia Hamdard Kannur
             Campus. Scan the code or open the form below.
           </p>
 
@@ -454,15 +458,15 @@ export default function ScrollCanvasAnimation({
           </div>
 
           <div className="pt-3 sm:pt-4 flex flex-wrap gap-2.5 sm:gap-3 justify-center md:justify-start">
-            <button onClick={onRegisterClick} className="cta-primary text-xs sm:text-sm">
+            <StarButton onClick={onRegisterClick} className="text-xs sm:text-sm">
               <QrCode className="w-4 h-4" /> OPEN REGISTRATION FORM
-            </button>
-            <button onClick={onPosterClick} className="cta-secondary text-xs sm:text-sm">
-              <ImageIcon className="w-4 h-4 text-[#FFBA00]" /> VIEW POSTER
-            </button>
+            </StarButton>
+            <StarButton onClick={onPosterClick} className="text-xs sm:text-sm">
+              <ImageIcon className="w-4 h-4" /> VIEW POSTER
+            </StarButton>
           </div>
           <p className="text-[11px] sm:text-xs font-mono text-white/70 pt-2 sm:pt-3">
-            Zypherix 2026 • 27–28 January • Jamia Hamdard Kannur Campus
+            Zypherix 2027 • 27–28 January • Jamia Hamdard Kannur Campus
           </p>
         </div>
       </div>
@@ -476,7 +480,7 @@ export default function ScrollCanvasAnimation({
     return (
       <div className="relative w-full bg-[#050811] text-white">
         <div className="mx-auto max-w-4xl px-4 py-10 space-y-6">
-          <img src="/poster.jpg" alt="Byteon — Zypherix 2026 poster" className="w-full rounded-2xl border border-white/20" />
+          <img src="/poster.jpg" alt="Byteon — Zypherix 2027 poster" className="w-full rounded-2xl border border-white/20" />
           {chapterBody.map((body, i) => (
             <section key={CHAPTERS[i].id} className="chapter-panel chapter-panel--static">
               {body}
@@ -525,7 +529,7 @@ export default function ScrollCanvasAnimation({
           </div>
           <div className="min-w-0">
             <span className="font-mono font-black text-white text-sm sm:text-base tracking-wider flex items-center gap-1.5">
-              BYTEON <span className="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded bg-[#FFBA00]/15 text-[#FFBA00] border border-white/15 font-bold">2026</span>
+              BYTEON <span className="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded bg-[#FFBA00]/15 text-[#FFBA00] border border-white/15 font-bold">2027</span>
             </span>
             <p className="text-[9px] sm:text-[11px] font-mono uppercase tracking-widest text-white/70 -mt-0.5 truncate max-w-[150px] xs:max-w-xs sm:max-w-none">
               Zypherix National IT Fest • 27, 28 Jan
@@ -533,15 +537,15 @@ export default function ScrollCanvasAnimation({
           </div>
         </div>
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          <button
+          <StarButton
             onClick={onPosterClick}
-            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0b1120] border border-white/20 text-white text-xs font-mono hover:border-[#FFBA00]/50 transition-colors"
+            className="hidden sm:inline-flex !px-3 !py-1.5 !text-xs !border-2"
           >
-            <ImageIcon className="w-3.5 h-3.5 text-[#FFBA00]" /> Event Poster
-          </button>
-          <button onClick={onRegisterClick} className="cta-primary !px-3 sm:!px-4 !py-1.5 sm:!py-2 text-xs">
+            <ImageIcon className="w-3.5 h-3.5" /> Event Poster
+          </StarButton>
+          <StarButton onClick={onRegisterClick} className="!px-3 sm:!px-4 !py-1.5 sm:!py-2 !text-xs !border-2">
             <QrCode className="w-3.5 h-3.5" /> <span>REGISTER NOW</span>
-          </button>
+          </StarButton>
         </div>
       </header>
 
@@ -628,7 +632,7 @@ export default function ScrollCanvasAnimation({
       {!videoReady && !videoMissing && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#050811] p-6">
           <div className="text-4xl sm:text-6xl font-black tracking-tighter text-white font-mono">
-            BYTEON<span className="text-[#FFBA00]">.2026</span>
+            BYTEON<span className="text-[#FFBA00]">.2027</span>
           </div>
           <p className="mt-3 text-sm font-mono text-white/70">
             Loading the Byteon film…
