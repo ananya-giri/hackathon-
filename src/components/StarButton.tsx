@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 
 const Star = () => (
   <svg
@@ -31,101 +31,130 @@ export default function StarButton({
   rel,
   download,
   as: Component = href ? "a" : "button",
+  onClick,
   ...props
 }: StarButtonProps) {
+  const [isSparkling, setIsSparkling] = useState(false);
+
+  const handleClick = (e: React.MouseEvent<any>) => {
+    setIsSparkling(false);
+    requestAnimationFrame(() => {
+      setIsSparkling(true);
+    });
+    setTimeout(() => {
+      setIsSparkling(false);
+    }, 850);
+
+    if (onClick) {
+      onClick(e);
+    }
+  };
+
   const baseClasses = `
     group relative 
     inline-flex items-center justify-center gap-2
-    px-[26px] py-[10px] sm:px-[35px] sm:py-[12px] 
-    text-[14px] sm:text-[17px] font-medium font-mono
+    px-[24px] py-[10px] sm:px-[32px] sm:py-[12px] 
+    text-[13px] sm:text-[15px] font-bold font-mono tracking-wide
     text-[#181818] 
     bg-[#fec195] 
-    border-[3px] border-[#fec195] 
-    rounded-md 
-    shadow-[0_0_0_#fec1958c] 
+    border-[2px] border-[#fec195] 
+    rounded-xl 
+    shadow-[0_4px_14px_rgba(255,186,0,0.18)] 
     [--tw-shadow-color:#fec195]
-    transition-all duration-300 ease-in-out 
+    transition-all duration-300 ease-out 
     cursor-pointer select-none
-    hover:bg-transparent hover:text-[#fec195] hover:shadow-[0_0_25px_#fec1958c]
+    hover:bg-transparent hover:text-[#fec195] hover:shadow-[0_0_20px_#fec19566]
     active:scale-95
   `;
 
   const starElements = (
     <>
-      {/* Star 1 */}
+      {/* Star 1 - Top Left */}
       <div
-        className="
-          absolute top-[20%] left-[20%] w-[25px] z-[-5] pointer-events-none
-          transition-all duration-[1000ms] ease-[cubic-bezier(0.05,0.83,0.43,0.96)] 
-          drop-shadow-[0_0_0_var(--tw-shadow-color)] 
-          group-hover:top-[-80%] group-hover:left-[-30%] 
-          group-hover:drop-shadow-[0_0_10px_var(--tw-shadow-color)] group-hover:z-[2]
-        "
+        className={`
+          absolute pointer-events-none transition-all duration-500 ease-out
+          w-[22px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
+          ${
+            isSparkling
+              ? "anim-star-burst-1 z-20"
+              : "opacity-0 scale-0 group-hover:opacity-85 group-hover:scale-100 group-hover:top-[-45%] group-hover:left-[-15%] z-10"
+          }
+        `}
       >
         <Star />
       </div>
 
-      {/* Star 2 */}
+      {/* Star 2 - Top Right */}
       <div
-        className="
-          absolute top-[45%] left-[45%] w-[15px] z-[-5] pointer-events-none
-          transition-all duration-[1000ms] ease-[cubic-bezier(0,0.4,0,1.01)] 
-          drop-shadow-[0_0_0_var(--tw-shadow-color)] 
-          group-hover:top-[-25%] group-hover:left-[10%] 
-          group-hover:drop-shadow-[0_0_10px_var(--tw-shadow-color)] group-hover:z-[2]
-        "
+        className={`
+          absolute pointer-events-none transition-all duration-500 ease-out
+          w-[16px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
+          ${
+            isSparkling
+              ? "anim-star-burst-2 z-20"
+              : "opacity-0 scale-0 group-hover:opacity-85 group-hover:scale-100 group-hover:top-[-45%] group-hover:left-[105%] z-10"
+          }
+        `}
       >
         <Star />
       </div>
 
-      {/* Star 3 */}
+      {/* Star 3 - Bottom Left */}
       <div
-        className="
-          absolute top-[40%] left-[40%] w-[5px] z-[-5] pointer-events-none
-          transition-all duration-[1000ms] ease-[cubic-bezier(0,0.4,0,1.01)] 
-          drop-shadow-[0_0_0_var(--tw-shadow-color)] 
-          group-hover:top-[55%] group-hover:left-[25%] 
-          group-hover:drop-shadow-[0_0_10px_var(--tw-shadow-color)] group-hover:z-[2]
-        "
+        className={`
+          absolute pointer-events-none transition-all duration-500 ease-out
+          w-[12px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
+          ${
+            isSparkling
+              ? "anim-star-burst-3 z-20"
+              : "opacity-0 scale-0 group-hover:opacity-80 group-hover:scale-90 group-hover:top-[125%] group-hover:left-[-10%] z-10"
+          }
+        `}
       >
         <Star />
       </div>
 
-      {/* Star 4 */}
+      {/* Star 4 - Bottom Right */}
       <div
-        className="
-          absolute top-[20%] left-[40%] w-[8px] z-[-5] pointer-events-none
-          transition-all duration-[800ms] ease-[cubic-bezier(0,0.4,0,1.01)] 
-          drop-shadow-[0_0_0_var(--tw-shadow-color)] 
-          group-hover:top-[30%] group-hover:left-[80%] 
-          group-hover:drop-shadow-[0_0_10px_var(--tw-shadow-color)] group-hover:z-[2]
-        "
+        className={`
+          absolute pointer-events-none transition-all duration-500 ease-out
+          w-[14px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
+          ${
+            isSparkling
+              ? "anim-star-burst-4 z-20"
+              : "opacity-0 scale-0 group-hover:opacity-80 group-hover:scale-90 group-hover:top-[120%] group-hover:left-[100%] z-10"
+          }
+        `}
       >
         <Star />
       </div>
 
-      {/* Star 5 */}
+      {/* Star 5 - Top Center */}
       <div
-        className="
-          absolute top-[25%] left-[45%] w-[15px] z-[-5] pointer-events-none
-          transition-all duration-[600ms] ease-[cubic-bezier(0,0.4,0,1.01)] 
-          drop-shadow-[0_0_0_var(--tw-shadow-color)] 
-          group-hover:top-[25%] group-hover:left-[115%] 
-          group-hover:drop-shadow-[0_0_10px_var(--tw-shadow-color)] group-hover:z-[2]
-        "
+        className={`
+          absolute pointer-events-none transition-all duration-500 ease-out
+          w-[18px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
+          ${
+            isSparkling
+              ? "anim-star-burst-5 z-20"
+              : "opacity-0 scale-0 group-hover:opacity-90 group-hover:scale-100 group-hover:top-[-55%] group-hover:left-[50%] z-10"
+          }
+        `}
       >
         <Star />
       </div>
 
-      {/* Star 6 */}
+      {/* Star 6 - Bottom Center */}
       <div
-        className="
-          absolute top-[5%] left-[50%] w-[5px] z-[-5] pointer-events-none
-          transition-all duration-[800ms] ease-in-out 
-          drop-shadow-[0_0_0_var(--tw-shadow-color)] 
-          group-hover:top-[5%] group-hover:left-[60%] 
-          group-hover:drop-shadow-[0_0_10px_var(--tw-shadow-color)] group-hover:z-[2]
-        "
+        className={`
+          absolute pointer-events-none transition-all duration-500 ease-out
+          w-[10px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
+          ${
+            isSparkling
+              ? "anim-star-burst-6 z-20"
+              : "opacity-0 scale-0 group-hover:opacity-75 group-hover:scale-90 group-hover:top-[130%] group-hover:left-[45%] z-10"
+          }
+        `}
       >
         <Star />
       </div>
@@ -139,10 +168,11 @@ export default function StarButton({
         target={target}
         rel={rel}
         download={download}
+        onClick={handleClick}
         className={`${baseClasses} ${className}`.trim()}
         {...(props as any)}
       >
-        <span className="relative z-[1] inline-flex items-center justify-center gap-2">
+        <span className="relative z-10 inline-flex items-center justify-center gap-2 select-none">
           {children}
         </span>
         {starElements}
@@ -152,10 +182,11 @@ export default function StarButton({
 
   return (
     <button
+      onClick={handleClick}
       className={`${baseClasses} ${className}`.trim()}
       {...props}
     >
-      <span className="relative z-[1] inline-flex items-center justify-center gap-2">
+      <span className="relative z-10 inline-flex items-center justify-center gap-2 select-none">
         {children}
       </span>
       {starElements}

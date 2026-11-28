@@ -53,7 +53,10 @@ import {
   Terminal,
   Cpu,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Trophy,
+  Award,
   MapPin,
   Phone,
   Mail,
@@ -62,6 +65,11 @@ import {
   CheckCircle2,
   Sparkles,
   Ticket,
+  Code2,
+  Server,
+  Copy,
+  Check,
+  MessageCircle,
 } from "lucide-react";
 import CurtainHeader from "./CurtainHeader";
 import StarButton from "./StarButton";
@@ -106,6 +114,38 @@ export default function ScrollCanvasAnimation({
   const [videoMissing, setVideoMissing] = useState(false);
   const [activeChapter, setActiveChapter] = useState(0);
   const [isReducedMotion, setIsReducedMotion] = useState(false);
+  const [copiedEmail, setCopiedEmail] = useState(false);
+  const [copiedPhone, setCopiedPhone] = useState<string | null>(null);
+  const [countdown, setCountdown] = useState({ days: 0, hours: 0, mins: 0, secs: 0 });
+
+  /* Live countdown to 27 January 2027, 09:00 AM IST */
+  useEffect(() => {
+    const targetDate = new Date("2027-01-27T09:00:00+05:30").getTime();
+    const update = () => {
+      const diff = Math.max(0, targetDate - Date.now());
+      setCountdown({
+        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+        mins: Math.floor((diff / (1000 * 60)) % 60),
+        secs: Math.floor((diff / 1000) % 60),
+      });
+    };
+    update();
+    const id = setInterval(update, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const handleCopyEmail = () => {
+    navigator.clipboard.writeText("zypherix2026@gmail.com");
+    setCopiedEmail(true);
+    setTimeout(() => setCopiedEmail(false), 2000);
+  };
+
+  const handleCopyPhone = (phone: string) => {
+    navigator.clipboard.writeText(phone);
+    setCopiedPhone(phone);
+    setTimeout(() => setCopiedPhone(null), 2000);
+  };
 
   /* Reduced motion: no scrubbing, show the poster still instead. */
   useEffect(() => {
@@ -237,6 +277,7 @@ export default function ScrollCanvasAnimation({
   }, [isReducedMotion, videoReady]);
 
   const jumpToChapter = (index: number) => {
+    const clamped = Math.max(0, Math.min(CHAPTER_COUNT - 1, index));
     const track = trackRef.current;
     if (!track) return;
     const maxScroll = track.offsetHeight - window.innerHeight;
@@ -244,10 +285,27 @@ export default function ScrollCanvasAnimation({
     // is still at 0 — otherwise a dot click shows an empty screen until
     // the visitor scrolls a little further.
     window.scrollTo({
-      top: track.offsetTop + ((index + 0.5) / CHAPTER_COUNT) * maxScroll,
+      top: track.offsetTop + ((clamped + 0.5) / CHAPTER_COUNT) * maxScroll,
       behavior: "smooth",
     });
   };
+
+  /* Keyboard arrow / PageUp / PageDown chapter stepping */
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if (e.key === "ArrowDown" || e.key === "PageDown") {
+        e.preventDefault();
+        jumpToChapter(activeChapterRef.current + 1);
+      } else if (e.key === "ArrowUp" || e.key === "PageUp") {
+        e.preventDefault();
+        jumpToChapter(activeChapterRef.current - 1);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   /* ------------------------------------------------------------------ */
   /* Chapter content. Every chapter renders inside .chapter-panel,      */
@@ -258,23 +316,68 @@ export default function ScrollCanvasAnimation({
     /* 1 — HERO */
     <>
       <div className="chip">
-        <Terminal className="w-4 h-4 text-[#FFBA00]" />
+        <span className="w-2 h-2 rounded-full bg-[#00F5A0] animate-pulse" />
+        <Terminal className="w-3.5 h-3.5 text-[#FFBA00]" />
         Zypherix 2027 // National Level IT Fest
       </div>
-      <CurtainHeader
-        as="h1"
-        text="BYTEON"
-        className="hero-title my-1 sm:my-2"
-        curtainClassName="fx-curtain--hero"
-      />
-      <p className="mt-2 sm:mt-3 text-lg sm:text-2xl md:text-3xl font-mono font-bold tracking-wider text-[#FFBA00]">
+      
+      {/* BYTEON dominant visual centerpiece */}
+      <div className="relative my-1 sm:my-2">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -inset-x-8 -inset-y-3 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(255,186,0,0.18),transparent_70%)] blur-2xl"
+        />
+        <CurtainHeader
+          as="h1"
+          text="BYTEON"
+          className="hero-title relative"
+          curtainClassName="fx-curtain--hero"
+        />
+      </div>
+
+      <p className="mt-1 text-base sm:text-2xl md:text-3xl font-mono font-bold tracking-wider text-[#FFBA00]">
         CODING CHALLENGE <span className="date-pill">27 JAN</span>
       </p>
-      <p className="body-text mt-3 sm:mt-4 max-w-lg text-sm sm:text-base">
+
+      <p className="body-text mt-2 sm:mt-3 max-w-lg text-xs sm:text-sm text-[#F2EFE6]">
         One screen, one scroll, one event. Keep scrolling — each detail of
         the contest appears on its own screen.
       </p>
-      <div className="mt-5 sm:mt-6 flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-xs sm:text-sm font-mono">
+
+      {/* Attractive Live Countdown Chronometer */}
+      <div className="mt-4 grid grid-cols-4 gap-2 sm:gap-3 w-full max-w-sm">
+        {[
+          { label: "DAYS", value: String(countdown.days).padStart(2, "0") },
+          { label: "HRS", value: String(countdown.hours).padStart(2, "0") },
+          { label: "MIN", value: String(countdown.mins).padStart(2, "0") },
+          { label: "SEC", value: String(countdown.secs).padStart(2, "0") },
+        ].map((unit) => (
+          <div
+            key={unit.label}
+            className="chronometer-cell flex flex-col items-center justify-center py-2 sm:py-2.5 px-1.5 rounded-xl backdrop-blur-md border border-white/15 bg-white/[0.04]"
+          >
+            <span className="font-mono font-black text-xl sm:text-2xl text-white tracking-tight tabular-nums">
+              {unit.value}
+            </span>
+            <span className="font-mono text-[9px] sm:text-[10px] tracking-[0.18em] text-[#FFBA00] mt-0.5 font-bold">
+              {unit.label}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* Primary Hero CTAs */}
+      <div className="mt-4 sm:mt-5 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">
+        <StarButton onClick={onRegisterClick} className="!px-5 sm:!px-6 !py-2.5 !text-xs sm:!text-sm">
+          <QrCode className="w-4 h-4" /> REGISTER NOW
+        </StarButton>
+        <StarButton onClick={onPosterClick} className="!px-4 sm:!px-5 !py-2.5 !text-xs sm:!text-sm !bg-transparent !text-[#fec195]">
+          <ImageIcon className="w-4 h-4" /> EVENT POSTER
+        </StarButton>
+      </div>
+
+      {/* Fact Pills */}
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-[11px] sm:text-xs font-mono">
         <span className="fact-pill">₹9,000 Total Prize Pool</span>
         <span className="fact-pill text-[#FFBA00] border-[#FFBA00]/45 font-bold shadow-[0_0_12px_rgba(255,186,0,0.15)]">
           <Ticket className="w-3.5 h-3.5 text-[#FFBA00]" />
@@ -283,7 +386,8 @@ export default function ScrollCanvasAnimation({
         <span className="fact-pill">Jamia Hamdard Kannur Campus</span>
         <span className="fact-pill">27–28 January 2027</span>
       </div>
-      <div className="mt-6 sm:mt-8 flex items-center gap-2 text-xs sm:text-sm font-mono text-white animate-bounce">
+
+      <div className="mt-4 sm:mt-5 flex items-center gap-2 text-xs sm:text-sm font-mono text-white/90 animate-bounce">
         <span>SCROLL TO STEP THROUGH THE EVENT</span>
         <ChevronDown className="w-4 h-4 text-[#FFBA00]" />
       </div>
@@ -299,26 +403,53 @@ export default function ScrollCanvasAnimation({
         <CurtainHeader as="span" text="WHERE LOGIC MEETS" startIndex={0} />
         <CurtainHeader as="span" text="RAW COMPUTING POWER" startIndex={16} className="text-[#FFBA00]" curtainClassName="fx-curtain--amber" />
       </div>
-      <div className="mt-5 sm:mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 w-full max-w-4xl text-left">
-        <div className="mini-card p-3.5 sm:p-5">
-          <span className="mini-label">// FEST</span>
-          <h3 className="mini-heading">ZYPHERIX &apos;27</h3>
+      <div className="mt-5 sm:mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4 w-full max-w-4xl text-left">
+        <div className="mini-card interactive-card p-4 sm:p-5">
+          <div className="flex items-center justify-between">
+            <span className="mini-label">01 // FESTIVAL</span>
+            <Sparkles className="w-4 h-4 text-[#FFBA00]/80" />
+          </div>
+          <h3 className="mini-heading text-lg font-black">ZYPHERIX &apos;27</h3>
           <p className="mini-text">
-            National Level IT Fest spanning 27 &amp; 28 January 2027.
+            National Level IT Fest spanning 27 &amp; 28 January 2027. Gathering top technical talent from across institutions.
           </p>
+          <div className="mt-3 pt-2.5 border-t border-white/10 flex items-center justify-between text-[10px] font-mono text-[#A8BFAF]">
+            <span>Annual Flagship</span>
+            <span className="text-[#FFBA00]">2-Day Summit</span>
+          </div>
         </div>
-        <div className="mini-card mini-card--hot p-3.5 sm:p-5">
-          <span className="mini-label">// EVENT</span>
-          <h3 className="mini-heading">BYTEON CODING</h3>
+        <div className="mini-card mini-card--hot interactive-card p-4 sm:p-5">
+          <div className="flex items-center justify-between">
+            <span className="mini-label">02 // CODING CONTEST</span>
+            <Code2 className="w-4 h-4 text-[#FFBA00]" />
+          </div>
+          <h3 className="mini-heading text-lg font-black text-[#FFBA00]">BYTEON 2027</h3>
           <p className="mini-text">
-            The coding contest of the fest — held on 27 January 2027.
+            The flagship competitive algorithmic programming event held on 27 January 2027. Speed, precision, and problem-solving.
           </p>
+          <div className="mt-3 pt-2.5 border-t border-white/10 flex items-center justify-between text-[10px] font-mono text-[#A8BFAF]">
+            <span>Cash Pool ₹9,000</span>
+            <span className="text-[#00F5A0] font-bold">27 Jan 2027</span>
+          </div>
         </div>
-        <div className="mini-card p-3.5 sm:p-5">
-          <span className="mini-label">// VENUE</span>
-          <h3 className="mini-heading">JAMIA HAMDARD</h3>
-          <p className="mini-text">Kannur Campus, Kerala.</p>
+        <div className="mini-card interactive-card p-4 sm:p-5">
+          <div className="flex items-center justify-between">
+            <span className="mini-label">03 // CAMPUS VENUE</span>
+            <MapPin className="w-4 h-4 text-[#FFBA00]/80" />
+          </div>
+          <h3 className="mini-heading text-lg font-black">JAMIA HAMDARD</h3>
+          <p className="mini-text">
+            Kannur Campus, Kerala. Hosted in high-speed computer laboratories with live execution test benches.
+          </p>
+          <div className="mt-3 pt-2.5 border-t border-white/10 flex items-center justify-between text-[10px] font-mono text-[#A8BFAF]">
+            <span>Kannur, Kerala</span>
+            <span className="text-white">On-Campus Lab</span>
+          </div>
         </div>
+      </div>
+      <div className="fact-pill mt-4 text-xs font-mono text-[#F2EFE6]">
+        <MapPin className="w-3.5 h-3.5 text-[#FFBA00]" />
+        Coordinates: 11.8745° N, 75.3704° E • Jamia Hamdard Kannur Campus
       </div>
     </>,
 
@@ -326,37 +457,49 @@ export default function ScrollCanvasAnimation({
     <>
       <div className="chip">
         <Trophy className="w-4 h-4 text-[#FFBA00]" />
-        Chapter 03 // Prizes
+        Chapter 03 // Bounties &amp; Accolades
       </div>
       <div className="chapter-title flex flex-wrap items-center justify-center gap-x-[0.35em] gap-y-1">
-        <CurtainHeader as="span" text="TOTAL POOL" startIndex={0} />
-        <CurtainHeader as="span" text="₹9,000/-" startIndex={10} className="text-[#FFBA00]" curtainClassName="fx-curtain--amber" />
+        <CurtainHeader as="span" text="TOTAL CASH POOL" startIndex={0} />
+        <span className="metallic-gold-text font-black">₹9,000/-</span>
       </div>
-      <div className="mt-5 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 w-full max-w-4xl text-left">
-        <div className="prize-card prize-card--first">
-          <span className="prize-badge">CHAMPION</span>
-          <span className="mini-label">First Prize</span>
-          <div className="prize-amount">
-            ₹6,000<span className="text-xl sm:text-2xl text-[#FFBA00]">/-</span>
+      <div className="mt-5 sm:mt-7 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 w-full max-w-4xl text-left">
+        <div className="prize-card prize-card--first interactive-card">
+          <span className="prize-badge">CHAMPION // 1ST PLACE</span>
+          <div className="flex items-center justify-between">
+            <span className="mini-label">First Prize</span>
+            <Trophy className="w-7 h-7 text-[#FFBA00] drop-shadow-[0_0_14px_rgba(255,186,0,0.6)]" />
+          </div>
+          <div className="prize-amount tabular-nums">
+            <span className="metallic-gold-text">₹6,000</span><span className="text-xl sm:text-2xl text-[#FFBA00]">/-</span>
           </div>
           <ul className="prize-list text-xs sm:text-sm">
-            <li><CheckCircle2 className="w-4 h-4 text-[#FFBA00] shrink-0" /> ₹6,000 cash prize</li>
-            <li><CheckCircle2 className="w-4 h-4 text-[#FFBA00] shrink-0" /> Winner trophy &amp; shield</li>
-            <li><CheckCircle2 className="w-4 h-4 text-[#FFBA00] shrink-0" /> Certificate of excellence</li>
+            <li><CheckCircle2 className="w-4 h-4 text-[#FFBA00] shrink-0" /> ₹6,000 Hard Cash Prize</li>
+            <li><CheckCircle2 className="w-4 h-4 text-[#FFBA00] shrink-0" /> Prestigious Winner Trophy &amp; Shield</li>
+            <li><CheckCircle2 className="w-4 h-4 text-[#FFBA00] shrink-0" /> National Level Certificate of Excellence</li>
+            <li><CheckCircle2 className="w-4 h-4 text-[#FFBA00] shrink-0" /> Sponsor Accolades from Upcode &amp; Infomac</li>
           </ul>
         </div>
-        <div className="prize-card prize-card--second">
-          <span className="prize-badge prize-badge--amber">RUNNER-UP</span>
-          <span className="mini-label">Second Prize</span>
-          <div className="prize-amount">
-            ₹3,000<span className="text-xl sm:text-2xl text-[#E8A85C]">/-</span>
+        <div className="prize-card prize-card--second interactive-card">
+          <span className="prize-badge prize-badge--amber">RUNNER-UP // 2ND PLACE</span>
+          <div className="flex items-center justify-between">
+            <span className="mini-label">Second Prize</span>
+            <Award className="w-7 h-7 text-[#E8A85C] drop-shadow-[0_0_14px_rgba(232,168,92,0.5)]" />
+          </div>
+          <div className="prize-amount tabular-nums">
+            <span className="metallic-bronze-text">₹3,000</span><span className="text-xl sm:text-2xl text-[#E8A85C]">/-</span>
           </div>
           <ul className="prize-list text-xs sm:text-sm">
-            <li><CheckCircle2 className="w-4 h-4 text-[#E8A85C] shrink-0" /> ₹3,000 cash prize</li>
-            <li><CheckCircle2 className="w-4 h-4 text-[#E8A85C] shrink-0" /> Runner-up trophy</li>
-            <li><CheckCircle2 className="w-4 h-4 text-[#E8A85C] shrink-0" /> Certificate of merit</li>
+            <li><CheckCircle2 className="w-4 h-4 text-[#E8A85C] shrink-0" /> ₹3,000 Cash Prize</li>
+            <li><CheckCircle2 className="w-4 h-4 text-[#E8A85C] shrink-0" /> Runner-up Trophy</li>
+            <li><CheckCircle2 className="w-4 h-4 text-[#E8A85C] shrink-0" /> Certificate of Merit</li>
+            <li><CheckCircle2 className="w-4 h-4 text-[#E8A85C] shrink-0" /> Zypherix IT Fest Recognition</li>
           </ul>
         </div>
+      </div>
+      <div className="fact-pill mt-4 sm:mt-5 font-mono text-[11px] sm:text-xs text-[#F2EFE6]">
+        <Sparkles className="w-3.5 h-3.5 text-[#FFBA00]" />
+        100% Guaranteed Cash Pool • Certificates Awarded at Grand Valedictory
       </div>
     </>,
 
@@ -368,15 +511,31 @@ export default function ScrollCanvasAnimation({
       </div>
       <CurtainHeader as="h2" text="OFFICIAL SPONSORS" className="chapter-title" />
       <div className="mt-5 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-6 w-full max-w-3xl text-center">
-        <div className="sponsor-card p-4 sm:p-7">
+        <div className="sponsor-card interactive-card relative p-5 sm:p-7">
+          <span className="absolute top-3 right-3 text-[9px] font-mono tracking-widest uppercase px-2 py-0.5 rounded-full bg-[#FFBA00]/10 border border-[#FFBA00]/30 text-[#FFBA00]">
+            TECHNICAL
+          </span>
+          <div className="w-12 h-12 rounded-2xl bg-[#FFBA00]/10 border border-[#FFBA00]/30 flex items-center justify-center text-[#FFBA00] mb-3">
+            <Code2 className="w-5 h-5" />
+          </div>
           <span className="text-2xl sm:text-3xl font-black text-white font-mono tracking-tight">upcode.</span>
           <span className="mini-label mt-1">SOFTWARE LABS</span>
-          <p className="mini-text mt-2 sm:mt-3 text-xs sm:text-sm">Official Technical Partner</p>
+          <span className="mt-3 px-3 py-1 rounded-full bg-white/5 border border-white/15 font-mono text-[11px] text-[#F2EFE6]">
+            Official Technical &amp; Software Partner
+          </span>
         </div>
-        <div className="sponsor-card p-4 sm:p-7">
+        <div className="sponsor-card interactive-card relative p-5 sm:p-7">
+          <span className="absolute top-3 right-3 text-[9px] font-mono tracking-widest uppercase px-2 py-0.5 rounded-full bg-[#FFBA00]/10 border border-[#FFBA00]/30 text-[#FFBA00]">
+            INFRASTRUCTURE
+          </span>
+          <div className="w-12 h-12 rounded-2xl bg-[#FFBA00]/10 border border-[#FFBA00]/30 flex items-center justify-center text-[#FFBA00] mb-3">
+            <Server className="w-5 h-5" />
+          </div>
           <span className="text-2xl sm:text-3xl font-black text-white font-mono tracking-wider">INFOMAC</span>
           <span className="mini-label mt-1">SYSTEMS</span>
-          <p className="mini-text mt-2 sm:mt-3 text-xs sm:text-sm">Official Infrastructure Partner</p>
+          <span className="mt-3 px-3 py-1 rounded-full bg-white/5 border border-white/15 font-mono text-[11px] text-[#F2EFE6]">
+            Official Infrastructure &amp; Hardware Partner
+          </span>
         </div>
       </div>
     </>,
@@ -390,16 +549,38 @@ export default function ScrollCanvasAnimation({
       <CurtainHeader as="h2" text="GET IN TOUCH" className="chapter-title" />
       <div className="mt-5 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-6 w-full max-w-3xl text-left">
         {[
-          { name: "Khalid Adeel", phone: "+91 8590090507", tel: "+918590090507", wa: "918590090507" },
-          { name: "Nihma Parveen", phone: "+91 8137831382", tel: "+918137831382", wa: "918137831382" },
+          { name: "Khalid Adeel", initials: "KA", phone: "+91 8590090507", tel: "+918590090507", wa: "918590090507" },
+          { name: "Nihma Parveen", initials: "NP", phone: "+91 8137831382", tel: "+918137831382", wa: "918137831382" },
         ].map((c) => (
-          <div key={c.phone} className="mini-card p-3.5 sm:p-5">
-            <span className="mini-label">Student Coordinator</span>
-            <h3 className="text-xl sm:text-2xl font-black text-white font-mono mt-1">{c.name}</h3>
-            <p className="text-base sm:text-xl font-mono font-bold text-[#FFBA00] mt-1">{c.phone}</p>
-            <div className="grid grid-cols-2 gap-2 mt-3 sm:mt-4">
+          <div key={c.phone} className="mini-card interactive-card p-4 sm:p-5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#FFBA00]/15 border border-[#FFBA00]/45 flex items-center justify-center font-mono font-black text-sm text-[#FFBA00] shrink-0">
+                {c.initials}
+              </div>
+              <div>
+                <span className="mini-label block">Student Coordinator</span>
+                <h3 className="text-lg sm:text-xl font-black text-white font-mono leading-tight">{c.name}</h3>
+              </div>
+            </div>
+            <div className="flex items-center justify-between mt-3">
+              <p className="text-base sm:text-lg font-mono font-bold text-[#FFBA00] tabular-nums">{c.phone}</p>
+              <button
+                type="button"
+                onClick={() => handleCopyPhone(c.phone)}
+                className="p-1.5 rounded-lg bg-white/5 border border-white/10 text-white/70 hover:text-[#FFBA00] hover:border-[#FFBA00]/40 transition-colors"
+                title="Copy phone number"
+                aria-label={`Copy ${c.name}'s phone number`}
+              >
+                {copiedPhone === c.phone ? (
+                  <Check className="w-3.5 h-3.5 text-[#00F5A0]" />
+                ) : (
+                  <Copy className="w-3.5 h-3.5" />
+                )}
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-2 mt-3">
               <StarButton as="a" href={`tel:${c.tel}`} className="!py-2 !px-3 !text-xs !border-2">
-                Call
+                <Phone className="w-3.5 h-3.5" /> Call
               </StarButton>
               <StarButton
                 as="a"
@@ -408,22 +589,34 @@ export default function ScrollCanvasAnimation({
                 rel="noopener noreferrer"
                 className="!py-2 !px-3 !text-xs !border-2"
               >
-                WhatsApp
+                <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
               </StarButton>
             </div>
           </div>
         ))}
       </div>
-      <div className="fact-pill mt-4 sm:mt-5 text-xs sm:text-sm flex flex-wrap justify-center">
+      <button
+        onClick={handleCopyEmail}
+        className="fact-pill mt-4 sm:mt-5 text-xs sm:text-sm flex flex-wrap items-center justify-center gap-2 hover:border-[#FFBA00]/50 transition-colors cursor-pointer"
+        title="Click to copy email"
+      >
         <Mail className="w-4 h-4 text-[#FFBA00]" />
-        Official mail: <strong className="text-white ml-1 break-all sm:break-normal">zypherix2026@gmail.com</strong>
-      </div>
+        <span>Official mail:</span>
+        <strong className="text-white break-all sm:break-normal">zypherix2026@gmail.com</strong>
+        {copiedEmail ? (
+          <span className="inline-flex items-center gap-1 text-[#00F5A0] font-mono text-[11px] font-bold">
+            <Check className="w-3.5 h-3.5" /> Copied
+          </span>
+        ) : (
+          <Copy className="w-3.5 h-3.5 text-[#FFBA00]/80" />
+        )}
+      </button>
     </>,
 
     /* 6 — REGISTER */
     <>
       <div className="register-panel flex flex-col md:flex-row items-center gap-4 sm:gap-6 md:gap-8 w-full">
-        <div className="qr-box p-3 sm:p-4">
+        <div className="qr-box relative p-3.5 sm:p-4 border border-white/20 shadow-lg">
           {/* Keep the QR at near-native size — upscaling it blurs the code. */}
           <img src="/qr-code.png" alt="Registration QR code" className="w-28 h-28 sm:w-36 sm:h-36 object-contain" width={144} height={144} />
           <span className="mt-2 text-[10px] sm:text-[11px] font-mono font-bold text-black uppercase tracking-wider">
@@ -454,7 +647,7 @@ export default function ScrollCanvasAnimation({
               <Ticket className="w-4 h-4 text-[#FFBA00]" />
               <span>Registration Fee: <strong className="text-[#FFBA00] font-black">Rs. 499</strong></span>
             </div>
-            <span className="fact-pill text-[11px] sm:text-xs">Per Team / Participant</span>
+            <span className="fact-pill text-[11px] sm:text-xs">Instant UPI / GPay Verification</span>
           </div>
 
           <div className="pt-3 sm:pt-4 flex flex-wrap gap-2.5 sm:gap-3 justify-center md:justify-start">
@@ -519,11 +712,40 @@ export default function ScrollCanvasAnimation({
         )}
         {/* One real scrim (see globals.css). Uniform, no bright centre. */}
         <div className="video-scrim" />
+        
+        {/* Subtle Cyber Grid Texture */}
+        <div className="absolute inset-0 cyber-grid-overlay opacity-20 pointer-events-none" />
+
+        {/* Dynamic Chapter Ambient Spotlights */}
+        <div
+          className={`ambient-spotlight w-[480px] h-[360px] sm:w-[650px] sm:h-[450px] ${
+            activeChapter === 0
+              ? "top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#FFBA00]/12"
+              : activeChapter === 1
+              ? "top-1/4 left-1/4 -translate-y-1/2 bg-[#00F5A0]/10"
+              : activeChapter === 2
+              ? "top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#FFBA00]/18"
+              : activeChapter === 3
+              ? "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#00d9f5]/08"
+              : activeChapter === 4
+              ? "top-1/2 right-1/4 -translate-y-1/2 bg-[#FFBA00]/10"
+              : "top-1/3 left-1/3 -translate-y-1/2 bg-[#FFBA00]/15"
+          }`}
+        />
+        <div
+          className={`ambient-spotlight w-[350px] h-[350px] ${
+            activeChapter === 2
+              ? "bottom-1/4 right-1/4 bg-[#b46617]/15 opacity-70"
+              : activeChapter === 1
+              ? "bottom-1/3 right-1/3 bg-[#00d9f5]/10 opacity-60"
+              : "bottom-10 left-1/2 -translate-x-1/2 bg-[#00F5A0]/06 opacity-40"
+          }`}
+        />
       </div>
 
       {/* Header — solid, not translucent-blur dependent */}
       <header className="fixed top-0 left-0 right-0 z-30 px-3 sm:px-8 py-2.5 sm:py-3.5 flex items-center justify-between bg-[#04070d]/95 border-b border-white/10 backdrop-blur-md">
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
           <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#FFBA00]/15 border border-[#FFBA00]/40 flex items-center justify-center text-[#FFBA00] shrink-0">
             <Terminal className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
@@ -534,6 +756,11 @@ export default function ScrollCanvasAnimation({
             <p className="text-[9px] sm:text-[11px] font-mono uppercase tracking-widest text-white/70 -mt-0.5 truncate max-w-[150px] xs:max-w-xs sm:max-w-none">
               Zypherix National IT Fest • 27, 28 Jan
             </p>
+          </div>
+          {/* Journey Waypoint HUD Indicator */}
+          <div className="hidden xl:flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.04] border border-white/10 font-mono text-[10px] tracking-widest text-[#F2EFE6]/75">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#00F5A0] animate-pulse" />
+            <span>STAGE 0{activeChapter + 1} // {CHAPTERS[activeChapter]?.title.split("//")[1]?.trim()}</span>
           </div>
         </div>
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
@@ -592,12 +819,48 @@ export default function ScrollCanvasAnimation({
             <span className="text-white/50 hidden xs:inline">CURRENT CHAPTER: </span>
             <strong className="text-white truncate">{CHAPTERS[activeChapter]?.title}</strong>
           </span>
-          <span className="shrink-0 text-[10px] sm:text-xs">
+
+          {/* Quick chapter pill stepper */}
+          <div className="hidden md:flex items-center gap-1.5">
+            {CHAPTERS.map((ch, idx) => (
+              <button
+                key={ch.id}
+                onClick={() => jumpToChapter(idx)}
+                title={ch.title}
+                aria-label={`Jump to ${ch.title}`}
+                className={`h-1.5 rounded-full transition-all duration-200 ${
+                  activeChapter === idx
+                    ? "w-6 bg-[#FFBA00] shadow-[0_0_8px_#FFBA00]"
+                    : "w-2 bg-white/20 hover:bg-[#FFBA00]/60"
+                }`}
+              />
+            ))}
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0 text-[10px] sm:text-xs">
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => jumpToChapter(activeChapter - 1)}
+                disabled={activeChapter === 0}
+                aria-label="Previous chapter"
+                className="p-1 rounded-md border border-white/15 bg-white/5 text-white/80 hover:border-[#FFBA00]/60 hover:text-[#FFBA00] disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => jumpToChapter(activeChapter + 1)}
+                disabled={activeChapter === CHAPTER_COUNT - 1}
+                aria-label="Next chapter"
+                className="p-1 rounded-md border border-white/15 bg-white/5 text-white/80 hover:border-[#FFBA00]/60 hover:text-[#FFBA00] disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
             <span className="sm:hidden font-bold text-[#FFBA00]">{activeChapter + 1}/{CHAPTER_COUNT}</span>
             <span className="hidden sm:inline">
-              {activeChapter + 1} / {CHAPTER_COUNT} — scroll for the next detail
+              {activeChapter + 1} / {CHAPTER_COUNT}
             </span>
-          </span>
+          </div>
         </div>
       </footer>
 
@@ -631,12 +894,18 @@ export default function ScrollCanvasAnimation({
       {/* Loading state: only until the video can play, not 238 images */}
       {!videoReady && !videoMissing && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#050811] p-6">
+          <div className="w-12 h-12 rounded-2xl bg-[#FFBA00]/15 border border-[#FFBA00]/45 flex items-center justify-center text-[#FFBA00] mb-4 animate-pulse shadow-[0_0_24px_rgba(255,186,0,0.2)]">
+            <Terminal className="w-6 h-6" />
+          </div>
           <div className="text-4xl sm:text-6xl font-black tracking-tighter text-white font-mono">
             BYTEON<span className="text-[#FFBA00]">.2027</span>
           </div>
-          <p className="mt-3 text-sm font-mono text-white/70">
-            Loading the Byteon film…
+          <p className="mt-3 text-xs sm:text-sm font-mono text-white/70 tracking-wider uppercase">
+            Initializing Byteon Experience…
           </p>
+          <div className="mt-5 w-48 h-1 rounded-full bg-white/10 overflow-hidden">
+            <div className="h-full w-1/2 rounded-full bg-gradient-to-r from-[#B46617] via-[#FFBA00] to-[#B46617] animate-pulse" />
+          </div>
         </div>
       )}
     </div>
